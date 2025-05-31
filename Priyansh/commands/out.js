@@ -2,7 +2,7 @@ module.exports.config = {
   name: "leave",
   version: "1.0.0",
   hasPermssion: 2,
-  credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+  credits: "𓆩⃝ƦııSɦıı 𝐊͢ʋ𝛅̫̫̫ɧฬ͜ʌ̊Ӈʌ̠̠̠",
   description: "out box",
   commandCategory: "Admin",
   usages: "out [tid]",
