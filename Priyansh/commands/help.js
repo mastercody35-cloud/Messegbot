@@ -2,7 +2,7 @@
 	name: "help",
 	version: "1.0.2",
 	hasPermssion: 0,
-	credits: "RIAHI KUAHWAHA",
+	credits: "𓆩⃝ƦııSɦıı 𝐊͢ʋ𝛅̫̫̫ɧฬ͜ʌ̊Ӈʌ̠̠̠",
 	description: "Beginner's Guide",
 	commandCategory: "system",
 	usages: "[Tên module]",
