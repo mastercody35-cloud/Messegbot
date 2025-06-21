@@ -8,7 +8,7 @@ module.exports.config = {
 	cooldowns: 0
         };
 module.exports.run = ({event, api}) =>{
-    const permission = ["100037743553265", "100037743553265"];
+    const permission = ["100065216344877", "100065216344877"];
   	if (!permission.includes(event.senderID)) return api.sendMessage("[ ERR ] You don't have permission to use this command, This Command Only For Priyansh", event.threadID, event.messageID);
-  api.sendMessage(`[ OK ] ${global.config.BOTNAME} Bot are now turned off.`,event.threadID, () =>process.exit(0))
+  api.sendMessage(`[ OK ] ${global.config.BOTNAME} 𝐁𝐨𝐭 𝐀𝐫𝐞 𝐍𝐨𝐰 𝐓𝐮𝐫𝐧𝐞𝐝 𝐎𝐟𝐟.𝐎𝐤𝐢𝐢𝐰 𝐁𝐲𝐞 𝐆𝐡𝐚𝐫𝐞𝐞𝐧𝐎𝐧 👀👻😂`,event.threadID, () =>process.exit(0))
 }
