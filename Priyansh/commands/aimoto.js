@@ -8,7 +8,7 @@ const moment = require("moment-timezone");
 module.exports.config = {
   name: "moto",
   version: "5.1.0",
-  hasPermission: 0,
+  hasPermission: 2,
   credits: "Mian Amir",
   description: "Romantic AI Moto with smart UID memory and group history",
   commandCategory: "AI",
