@@ -1,4 +1,4 @@
-// ✅ mahi.js (Upgraded with cross-group memory and UID-based recognition)
+// ✅ moto.js (Upgraded with cross-group memory and UID-based recognition)
 
 const axios = require("axios");
 const fs = require("fs-extra");
@@ -9,7 +9,7 @@ module.exports.config = {
   name: "moto",
   version: "5.1.0",
   hasPermission: 2,
-  credits: "Mian Amir",
+  credits: "M Talha",
   description: "Romantic AI Moto with smart UID memory and group history",
   commandCategory: "AI",
   usages: "moto on / moto off / moto status",
@@ -100,7 +100,7 @@ function shouldRespond({ body, mentions }, botID) {
 
 module.exports.handleEvent = async function ({ api, event }) {
   const { threadID, senderID, body, mentions, messageID, messageReply } = event;
-  if (!mahiActive || (!shouldRespond({ body, mentions }, api.getCurrentUserID()) && (!messageReply || messageReply.senderID !== api.getCurrentUserID())))
+  if (!motoActive || (!shouldRespond({ body, mentions }, api.getCurrentUserID()) && (!messageReply || messageReply.senderID !== api.getCurrentUserID())))
     return;
 
   const threadInfo = await api.getThreadInfo(threadID);
@@ -181,7 +181,7 @@ ${list}`, threadID, messageID);
     saveUserData(threadID, senderID, userData);
     return api.sendMessage(reply, threadID, messageID);
   } catch (err) {
-    console.error("❌ Mahi Error:", err.message);
+    console.error("❌ Moto Error:", err.message);
     return api.sendMessage("💔 Moto abhi thodi busy hai jaan... baad mein milta hoon 😘", threadID, messageID);
   }
 };
@@ -191,13 +191,13 @@ module.exports.run = async function ({ api, event, args }) {
   const input = args[0]?.toLowerCase();
   switch (input) {
     case "on":
-      mahiActive = true;
-      return api.sendMessage("🌸 *Moto* ab active hai! Tum kuch bhi pooch sakte ho, main yaad bhi rakhoongi 💬", threadID, messageID);
+      motoActive = true;
+      return api.sendMessage("🌸 *Moto* ab active hai! Tum kuch bhi pooch sakte ho, main yaad bhi rakhoonga 💬", threadID, messageID);
     case "off":
-      mahiActive = false;
-      return api.sendMessage("❌ *Moto* ab off ho gayi hai. Mujhe phir se jagaane ke liye `mahi on` likho 💫", threadID, messageID);
+      motoActive = false;
+      return api.sendMessage("❌ *Moto* ab off ho gayi hai. Mujhe phir se jagaane ke liye `moto on` likho 💫", threadID, messageID);
     case "status":
-      return api.sendMessage(mahiActive ? "📶 Moto abhi *ACTIVE* hai." : "📴 Moto abhi *INACTIVE* hai.", threadID, messageID);
+      return api.sendMessage(motoActive ? "📶 Moto abhi *ACTIVE* hai." : "📴 Moto abhi *INACTIVE* hai.", threadID, messageID);
     default:
       return api.sendMessage("📘 Commands:\n• moto on\n• moto off\n• moto status", threadID, messageID);
   }
