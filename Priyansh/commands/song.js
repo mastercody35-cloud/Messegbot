@@ -1,17 +1,34 @@
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const HttpsProxyAgent = require("https-proxy-agent");
 const { ytsearch, ytmp3 } = require("ruhend-scraper");
 const { Downloader } = require("abot-scraper");
 
 const downloader = new Downloader();
 
+// 🔁 Proxy list (from your data)
+const proxies = [
+  "http://27.71.142.16:16000",
+  "http://186.179.169.22:3128",
+  "http://72.10.160.91:18749",
+  "http://27.79.136.134:16000",
+  "http://18.203.249.67:10010",
+  "http://43.217.134.23:3128",
+  "http://57.129.81.201:8080"
+];
+
+function getRandomProxy() {
+  const proxy = proxies[Math.floor(Math.random() * proxies.length)];
+  return new HttpsProxyAgent(proxy);
+}
+
 module.exports.config = {
   name: "song",
-  version: "2.0.0",
+  version: "3.0.0",
   hasPermssion: 0,
   credits: "Mian Amir",
-  description: "Download YouTube audio or video",
+  description: "Download YouTube audio or video (with fallback proxy)",
   commandCategory: "media",
   usages: "[song name] [optional: video]",
   cooldowns: 5
@@ -53,11 +70,18 @@ module.exports.run = async function ({ api, event, args }) {
       downloadUrl = audio;
     }
 
-    const response = await axios({
+    const axiosOptions = {
       method: "GET",
       url: downloadUrl,
       responseType: "stream"
-    });
+    };
+
+    // ✅ Use proxy only when not running on Replit
+    if (!process.env.REPL_ID) {
+      axiosOptions.httpsAgent = getRandomProxy();
+    }
+
+    const response = await axios(axiosOptions);
 
     const writer = fs.createWriteStream(filePath);
     response.data.pipe(writer);
@@ -73,7 +97,7 @@ module.exports.run = async function ({ api, event, args }) {
     });
 
     writer.on("error", (err) => {
-      console.error("❌ Write error:", err);
+      console.error("❌ File write error:", err);
       api.sendMessage("❌ Failed to save the file.", event.threadID, event.messageID);
     });
 
