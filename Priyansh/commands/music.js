@@ -1,126 +1,84 @@
-const ytdl = require('@distube/ytdl-core');
-const ytSearch = require('yt-search');
-const fs = require('fs');
-const path = require('path');
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
+const { ytsearch, ytmp3 } = require("ruhend-scraper");
+const { Downloader } = require("abot-scraper");
 
-module.exports = {
-  config: {
-    name: "play",
-    version: "1.0.3", // Updated version to reflect changes
-    hasPermssion: 0,
-    credits: "Mian Amir",
-    description: "Download and play YouTube song or video from keyword search",
-    commandCategory: "Media",
-    usages: "[songName] or [video songName]",
-    cooldowns: 5,
-    dependencies: {
-      "@distube/ytdl-core": "",
-      "yt-search": "",
-      "fs": "",
-      "path": ""
-    },
-  },
+const downloader = new Downloader();
 
-  run: async function ({ api, event, args }) {
-    let songName, type;
+module.exports.config = {
+  name: "song",
+  version: "2.0.0",
+  hasPermssion: 0,
+  credits: "Mian Amir",
+  description: "Download YouTube audio or video",
+  commandCategory: "media",
+  usages: "[song name] [optional: video]",
+  cooldowns: 5
+};
 
-    // Parse command: .play <song> or .play video <song>
-    if (args.length > 1 && args[0].toLowerCase() === "video") {
-      type = "video";
-      songName = args.slice(1).join(" ");
-    } else {
-      type = "audio";
-      songName = args.join(" ");
+module.exports.run = async function ({ api, event, args }) {
+  if (!args[0]) {
+    return api.sendMessage("❌ Please type a song name.\n\nExample: .song tum hi ho\nOr: .song tum hi ho video", event.threadID, event.messageID);
+  }
+
+  const isVideo = args[args.length - 1].toLowerCase() === "video";
+  const query = isVideo ? args.slice(0, -1).join(" ") : args.join(" ");
+  const waitMsg = await api.sendMessage(`🔍 Searching: ${query} (${isVideo ? "video" : "audio"})...`, event.threadID);
+
+  try {
+    const { video } = await ytsearch(query);
+    if (!video || video.length === 0) {
+      return api.sendMessage("❌ No result found.", event.threadID, event.messageID);
     }
 
-    if (!songName) {
-      return api.sendMessage(
-        "Please provide a song name. Usage: .play [songName] or .play video [songName]",
-        event.threadID,
-        event.messageID
-      );
-    }
+    const selected = video[0];
+    const safeTitle = selected.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+    const fileName = isVideo ? `${safeTitle}.mp4` : `${safeTitle}.mp3`;
+    const filePath = path.join(__dirname, fileName);
 
-    const processingMessage = await api.sendMessage(
-      "✅ Processing your request. Please wait...",
-      event.threadID,
-      null,
-      event.messageID
-    );
+    let downloadUrl = null;
 
-    try {
-      // Search for the song on YouTube
-      const searchResults = await ytSearch(songName);
-      if (!searchResults || !searchResults.videos.length) {
-        throw new Error("No results found for your search query.");
+    if (isVideo) {
+      const res = await downloader.youtubeDownloader(selected.url);
+      if (!res || res.status !== 200 || !res.result?.video) {
+        return api.sendMessage("❌ Failed to fetch video URL.", event.threadID, event.messageID);
       }
-
-      // Get the top result
-      const topResult = searchResults.videos[0];
-      const videoUrl = `https://www.youtube.com/watch?v=${topResult.videoId}`;
-
-      // Set filename based on type
-      const safeFileName = topResult.title.replace(/[^a-zA-Z0-9 ]/g, ""); // Remove special characters
-      const filename = `${safeFileName}.${type === "audio" ? "mp3" : "mp4"}`;
-      const downloadPath = path.join(__dirname, filename);
-
-      api.setMessageReaction("⌛", event.messageID, () => {}, true);
-
-      // Download with @distube/ytdl-core
-      const stream = ytdl(videoUrl, {
-        filter: type === "video" ? "videoandaudio" : "audioonly",
-        quality: type === "video" ? "highestvideo" : "highestaudio", // Fixed quality setting
-        requestOptions: {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          }
-        }
-      });
-
-      // Save the file
-      const writeStream = fs.createWriteStream(downloadPath);
-      stream.pipe(writeStream);
-
-      await new Promise((resolve, reject) => {
-        writeStream.on('finish', resolve);
-        writeStream.on('error', reject);
-        stream.on('error', (error) => {
-          if (error.statusCode === 503) {
-            reject(new Error("YouTube server unavailable (503). Please try again later."));
-          } else if (error.message.includes("No such format found")) {
-            reject(new Error("The requested format is not available for this video. Try another song or type."));
-          } else {
-            reject(error);
-          }
-        });
-      });
-
-      api.setMessageReaction("✅", event.messageID, () => {}, true);
-
-      // Send the file via Messenger
-      await api.sendMessage(
-        {
-          attachment: fs.createReadStream(downloadPath),
-          body: `🖤 Title: ${topResult.title}\n\nHere is your ${
-            type === "audio" ? "audio" : "video"
-          } 🎧:`,
-        },
-        event.threadID,
-        () => {
-          fs.unlinkSync(downloadPath); // Clean up the file
-          api.unsendMessage(processingMessage.messageID); // Remove processing message
-        },
-        event.messageID
-      );
-    } catch (error) {
-      console.error(`Failed to download and send song: ${error.message}`);
-      api.setMessageReaction("❌", event.messageID, () => {}, true);
-      api.sendMessage(
-        `Failed to download song: ${error.message}`,
-        event.threadID,
-        event.messageID
-      );
-      api.unsendMessage(processingMessage.messageID);
+      downloadUrl = res.result.video;
+    } else {
+      const { title, audio } = await ytmp3(selected.url);
+      if (!audio || !audio.startsWith("http")) {
+        return api.sendMessage("❌ Failed to fetch MP3 link.", event.threadID, event.messageID);
+      }
+      downloadUrl = audio;
     }
-  },
+
+    const response = await axios({
+      method: "GET",
+      url: downloadUrl,
+      responseType: "stream"
+    });
+
+    const writer = fs.createWriteStream(filePath);
+    response.data.pipe(writer);
+
+    writer.on("finish", async () => {
+      await api.sendMessage({
+        body: `🎶 Title: ${selected.title}\n✅ Here's your ${isVideo ? "video" : "song"}:`,
+        attachment: fs.createReadStream(filePath)
+      }, event.threadID, () => {
+        fs.unlinkSync(filePath);
+        api.unsendMessage(waitMsg.messageID);
+      }, event.messageID);
+    });
+
+    writer.on("error", (err) => {
+      console.error("❌ Write error:", err);
+      api.sendMessage("❌ Failed to save the file.", event.threadID, event.messageID);
+    });
+
+  } catch (err) {
+    console.error("❌ Main error:", err.message);
+    api.sendMessage("❌ Error occurred while processing your request.", event.threadID, event.messageID);
+  }
 };
