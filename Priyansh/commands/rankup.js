@@ -2,7 +2,7 @@ module.exports.config = {
 	name: "rankup",
 	version: "7.3.1",
 	hasPermssion: 1,
-	credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+	credits: "Mirai",
 	description: "Announce rankup for each group, user",
 	commandCategory: "Edit-IMG",
 	dependencies: {
@@ -105,7 +105,7 @@ module.exports.languages = {
 		"on": "on",
 		"off": "off",
 		"successText": "success notification rankup!",
-		"levelup": "{name}, your keyboard has reached level {level}",
+		"levelup": "{name}\n━━━━━━━━━━━━━━━━\n 𝘉𝘩𝘖𝘵 𝘞𝘦𝘭𝘺 𝘩𝘖 𝘉𝘦𝘦𝘳𝘖 𝘭𝘢𝘎𝘺 𝘳𝘢𝘏𝘰🙂😂 {level}\n━━━━━━━━━━━━━━━━\n★᭄𝗖𝗿𝗲𝗱𝗶𝘁𝘀  ཫ༄𒁍≛⃝𝐌 𝐓𝐀𝐋𝐇𝐀🥰♥",
 	}
 }
 
