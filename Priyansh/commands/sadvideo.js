@@ -5,7 +5,7 @@ module.exports.config = {
   credits: "Modded By RKO BRO",
   description: "RANDOM SAD video",
   commandCategory: "Random video",
-  usages: "status",
+  usages: "sadvideo",
   cooldowns: 5,
   dependencies: {
     "request":"",
