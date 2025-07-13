@@ -2,17 +2,16 @@ module.exports.config = {
     name: "adc",
     version: "1.0.0",
     hasPermssion: 2,
-    credits: "Arun",
+    credits: "D-Jukie",
     description: "Apply code from buildtooldev and pastebin",
     commandCategory: "Admin",
     usages: "[reply or text]",
     cooldowns: 0,
     dependencies: {
-        "pastebin-api": "",
-        "cheerio": "",
-        "request": ""
+
     }
 };
+
 module.exports.run = async function ({ api, event, args }) {
     const axios = require('axios');
     const fs = require('fs');
@@ -24,15 +23,15 @@ module.exports.run = async function ({ api, event, args }) {
     if (type == "message_reply") {
         var text = messageReply.body;
     }
-    if(!text && !name) return api.sendMessage('𝙂 𝘽𝘼𝘽𝙐 𝙆𝙄𝘼 𝙃𝙐𝘼?', threadID, messageID);
+    if(!text && !name) return api.sendMessage('Please reply to the link you want to apply the code to or write the file name to upload the code to pastebin!', threadID, messageID);
     if(!text && name) {
         var data = fs.readFile(
           `${__dirname}/${args[0]}.js`,
           "utf-8",
           async (err, data) => {
-            if (err) return api.sendMessage(`𝘽𝙖𝙗𝙪 𝙔𝙖 ${args[0]} 𝘾𝙤𝙢𝙢𝙖𝙣𝙙 𝘼𝙥 𝙆𝙖 𝘽𝙤𝙩 𝙈𝙖 𝙉𝙖𝙝𝙞 𝙃𝙖.`, threadID, messageID);
+            if (err) return api.sendMessage(`Command ${args[0]} does not exist!.`, threadID, messageID);
             const { PasteClient } = require('pastebin-api')
-            const client = new PasteClient("R02n6-lNPJqKQCd5VtL4bKPjuK6ARhHb");
+            const client = new PasteClient("aeGtA7rxefvTnR3AKmYwG-jxMo598whT");
             async function pastepin(name) {
               const url = await client.createPaste({
                 code: data,
@@ -60,8 +59,8 @@ module.exports.run = async function ({ api, event, args }) {
                 data,
                 "utf-8",
                 function (err) {
-                    if (err) return api.sendMessage(`𝘽𝙖𝙗𝙪 𝙈𝙖 𝘾𝙤𝙙𝙚 𝘼𝙥𝙥𝙡𝙮 𝙉𝙖𝙝𝙞 𝙆𝙖𝙧 𝙋𝙖𝙮𝙖 ${args[0]}.js`, threadID, messageID);
-                    api.sendMessage(`𝘽𝙖𝙗𝙮 𝘼𝙥𝙠𝙖 𝘾𝙤𝙙𝙚 𝘼𝙥𝙥𝙡𝙮 𝙃𝙤 𝙂𝙖𝙮𝙖 𝙃𝙖 ${args[0]}.js, 𝘼𝙗 𝘾𝙤𝙢𝙢𝙖𝙣𝙙 𝙇𝙤𝙖𝙙 𝙐𝙨𝙚 𝙆𝙖𝙧𝙤 𝘼𝙥𝙣𝙞 𝙁𝙞𝙡𝙚 𝙆𝙤 𝙇𝙤𝙖𝙙 𝙆𝙖𝙧𝙣𝙖𝙮 𝙆𝙖 𝙇𝙞𝙖𝙮`, threadID, messageID);
+                    if (err) return api.sendMessage(`An error occurred while applying the code ${args[0]}.js`, threadID, messageID);
+                    api.sendMessage(`Code applied ${args[0]}.js, use command load to use!`, threadID, messageID);
                 }
             );
         })
@@ -73,15 +72,15 @@ module.exports.run = async function ({ api, event, args }) {
             url: messageReply.body
         };
         request(options, function (error, response, body) {
-            if (error) return api.sendMessage('𝘽𝙖𝙗𝙮 𝙆𝙞𝙨𝙞 𝙇𝙞𝙣𝙠 𝙎𝙖 𝙍𝙚𝙥𝙡𝙮 𝙆𝙖𝙧𝙤𝙢 𝙉𝙖 𝙅𝙤 𝙎𝙘𝙧𝙞𝙥𝙩 𝘼𝙥 𝘼𝙥𝙣𝙖 𝘽𝙤𝙩 𝙈𝙖 𝘼𝙙𝙙 𝙆𝙖𝙧𝙣𝙖 𝘾𝙝𝙖𝙝𝙩𝙖 𝙃𝙤', threadID, messageID);
+            if (error) return api.sendMessage('Please only reply to the link (contains nothing but links)', threadID, messageID);
             const load = cheerio.load(body);
             load('.language-js').each((index, el) => {
                 if (index !== 0) return;
                 var code = el.children[0].data
                 fs.writeFile(`${__dirname}/${args[0]}.js`, code, "utf-8",
                     function (err) {
-                        if (err) return api.sendMessage(`𝘽𝙖𝙗𝙪 𝘼𝙣 𝙚𝙧𝙧𝙤𝙧 𝙤𝙘𝙘𝙪𝙧𝙧𝙚𝙙 𝙬𝙝𝙞𝙡𝙚 𝙖𝙥𝙥𝙡𝙮𝙞𝙣𝙜 𝙩𝙝𝙚 𝙣𝙚𝙬 𝙘𝙤𝙙𝙚 𝙩𝙤 "${args[0]}.js".`, threadID, messageID);
-                        return api.sendMessage(`𝘽𝙖𝙗𝙮 𝘼𝙥𝙠𝙖 𝘾𝙤𝙙𝙚 𝘼𝙥𝙥𝙡𝙮 𝙃𝙤 𝙂𝘼𝙮𝙖 𝙃𝙖 "${args[0]}.js", 𝘼𝙗 𝘾𝙤𝙢𝙢𝙖𝙣𝙙 𝙇𝙤𝙖𝙙 𝙐𝙨𝙚 𝙆𝙖𝙧𝙤 𝘼𝙥𝙣𝙞 𝙁𝙞𝙡𝙚 𝙆𝙤 𝙇𝙤𝙖𝙙 𝙆𝙖𝙧𝙣𝙖𝙮 𝙆𝙖 𝙇𝙞𝙖𝙮`, threadID, messageID);
+                        if (err) return api.sendMessage(`An error occurred while applying the new code to "${args[0]}.js".`, threadID, messageID);
+                        return api.sendMessage(`Added this code "${args[0]}.js", use command load to use!`, threadID, messageID);
                     }
                 );
             });
@@ -93,10 +92,10 @@ module.exports.run = async function ({ api, event, args }) {
       const path = resolve(__dirname, `${args[0]}.js`);
       try {
         await utils.downloadFile(`https://drive.google.com/u/0/uc?id=${id}&export=download`, path);
-        return api.sendMessage(`Added this code "${args[0]}.js" If there is an error, change the drive file to txt!`, threadID, messageID);
+        return api.sendMessage(`Added this code "${args[0]}.js" If an error occurs, change the drive file to txt!`, threadID, messageID);
       }
       catch(e) {
-        return api.sendMessage(`𝘽𝙖𝙗𝙪 𝙈𝙖 𝙉𝙚𝙬 𝘾𝙤𝙙𝙚 𝘼𝙥𝙥𝙡𝙮 𝙉𝙖𝙝𝙞 𝙆𝙖𝙧 𝙋𝙖𝙮𝙖 "${args[0]}.js".`, threadID, messageID);
+        return api.sendMessage(`An error occurred while applying the new code to "${args[0]}.js".`, threadID, messageID);
       }
     }
-}
+                }
