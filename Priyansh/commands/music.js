@@ -1,86 +1,68 @@
-const ytdlp = require('yt-dlp-exec');
-const fs = require('fs');
-const path = require('path');
-
-function deleteAfterTimeout(filePath, timeout = 60000) {
-  setTimeout(() => {
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-  }, timeout);
-}
-
-function formatDuration(s) {
-  let m = Math.floor(s / 60), sec = s % 60;
-  return `${m}m ${sec}s`;
-}
+const { exec } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+const ytdl = require("yt-dlp-exec");
+const axios = require("axios");
 
 module.exports = {
   config: {
     name: "music",
-    version: "2.1.0",
+    version: "1.1.0",
     hasPermssion: 0,
-    credits: "Mirrykal + ChatGPT",
-    description: "Download YouTube audio/video by query (unlimited)",
+    credits: "Modified by ChatGPT",
+    description: "Download YouTube audio/video by query using yt-dlp",
     commandCategory: "Media",
     usages: "music <query> | music video <query>",
     cooldowns: 5,
   },
 
   run: async function ({ api, event, args }) {
-    if (!args[0]) return api.sendMessage("🎵 Gana ka naam likho!", event.threadID);
+    const isVideo = args[0] === "video";
+    const query = isVideo ? args.slice(1).join(" ") : args.join(" ");
+    if (!query) return api.sendMessage("❌ Gana ka naam likho!", event.threadID);
 
-    const isVideo = args[0].toLowerCase() === 'video';
-    const query = isVideo ? args.slice(1).join(' ') : args.join(' ');
-
-    await api.sendMessage(`🔍 "${query}" dhoondh raha hoon...`, event.threadID);
+    const waitMsg = await api.sendMessage(`🔎 "${query}" search ho raha hai...`, event.threadID);
 
     try {
-      const info = await ytdlp(query, {
-        dumpSingleJson: true,
-        noWarnings: true,
-        noCallHome: true,
-        noCheckCertificate: true,
-        preferFreeFormats: true,
-        format: isVideo ? 'best[ext=mp4][height<=480]' : 'bestaudio[ext=m4a]/bestaudio'
+      const search = await ytdl(`ytsearch1:${query}`, {
+        dumpSingleJson: true
       });
 
-      const downloadUrl = info.url;
-      const title = info.title || 'audio';
-      const duration = info.duration || 0;
-      const author = info.uploader || 'Unknown';
-      const videoUrl = info.webpage_url;
-      const thumbnail = info.thumbnail;
+      const video = search.entries[0];
+      const videoUrl = video.webpage_url;
+      const title = video.title;
+      const fileExt = isVideo ? "mp4" : "mp3";
+      const safeTitle = title.replace(/[^\w\s]/gi, "_").slice(0, 30);
+      const filePath = path.join(__dirname, "cache", `${safeTitle}.${fileExt}`);
 
-      // Send thumbnail with info
-      const thumbPath = path.join(__dirname, 'cache', `${Date.now()}_thumb.jpg`);
-      const thumb = await ytdlp.exec(thumbnail, { output: thumbPath });
+      const thumbPath = path.join(__dirname, "cache", `${safeTitle}.jpg`);
+      const thumb = await axios.get(video.thumbnail, { responseType: 'arraybuffer' });
+      fs.writeFileSync(thumbPath, Buffer.from(thumb.data, 'binary'));
+
       await api.sendMessage({
         body:
-          `🎵 ${isVideo ? '🎥 Video' : '🎧 Audio'} Info:\n\n` +
+          `🎧 ${isVideo ? "Video" : "Audio"} Info:\n\n` +
           `📌 Title: ${title}\n` +
-          `👤 Channel: ${author}\n` +
-          `⏱️ Duration: ${formatDuration(duration)}\n` +
-          `🔗 ${videoUrl}`,
-        attachment: fs.createReadStream(thumbPath)
-      }, event.threadID, () => deleteAfterTimeout(thumbPath), event.messageID);
+          `⏱ Duration: ${video.duration} sec\n` +
+          `🔗 Link: ${videoUrl}`,
+        attachment: fs.createReadStream(thumbPath),
+      }, event.threadID, () => fs.unlinkSync(thumbPath), event.messageID);
 
-      // Download media
-      const ext = isVideo ? 'mp4' : 'm4a';
-      const safeTitle = title.replace(/[^\w\s]/gi, '_').slice(0, 30);
-      const filePath = path.join(__dirname, 'cache', `${safeTitle}.${ext}`);
-
-      await ytdlp.exec(query, {
+      await ytdl(videoUrl, {
         output: filePath,
-        format: isVideo ? 'best[ext=mp4][height<=480]' : 'bestaudio[ext=m4a]/bestaudio'
+        format: isVideo ? "mp4[height<=480]" : "bestaudio",
+        extractAudio: !isVideo,
+        audioFormat: "mp3"
       });
 
       await api.sendMessage({
-        body: `✅ Lo bhai, ${isVideo ? 'video' : 'audio'} mil gaya!`,
-        attachment: fs.createReadStream(filePath)
-      }, event.threadID, () => deleteAfterTimeout(filePath), event.messageID);
+        body: `✅ Here's your ${isVideo ? "video" : "audio"}:`,
+        attachment: fs.createReadStream(filePath),
+      }, event.threadID, () => fs.unlinkSync(filePath), event.messageID);
 
-    } catch (e) {
-      console.error(e);
-      return api.sendMessage(`❌ Error: ${e.message}`, event.threadID);
+    } catch (err) {
+      console.error(err);
+      api.sendMessage(`❌ Error: ${err.message || "Download failed."}`, event.threadID, event.messageID);
     }
-  }
+  },
 };
