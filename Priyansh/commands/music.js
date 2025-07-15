@@ -1,7 +1,6 @@
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
-const https = require("https");
 
 function deleteAfterTimeout(filePath, timeout = 60000) {
   setTimeout(() => {
@@ -42,32 +41,42 @@ module.exports = {
     const query = isVideo ? args.slice(1).join(" ") : args.join(" ");
     await api.sendMessage(`🔍 "${query}" dhoondh raha hoon...`, event.threadID);
 
-    // Search YouTube video
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&maxResults=1&type=video&key=AIzaSyAGQrBQYworsR7T2gu0nYhLPSsi2WFVrgQ`;
-
     try {
+      // YouTube search
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&maxResults=1&type=video&key=AIzaSyAGQrBQYworsR7T2gu0nYhLPSsi2WFVrgQ`;
       const searchRes = await axios.get(searchUrl);
+
       if (!searchRes.data.items.length) throw new Error("❌ Gana nahi mila.");
 
       const video = searchRes.data.items[0];
       const videoId = video.id.videoId;
       const videoUrl = `https://youtu.be/${videoId}`;
 
-      // 📥 Use vihangayt.me API
+      // API call for download link
       const apiUrl = isVideo
         ? `https://vihangayt.me/download/ytmp4?url=${videoUrl}`
         : `https://vihangayt.me/download/ytmp3?url=${videoUrl}`;
 
       const dataRes = await axios.get(apiUrl);
 
-      if (!dataRes.data?.data?.url) throw new Error("❌ Download URL nahi mila (vihangayt).");
+      if (!dataRes.data?.data?.url) throw new Error("❌ Download URL nahi mila.");
 
-      const downloadUrl = dataRes.data.data.url;
-      const title = dataRes.data.data.title || query;
-      const thumbnail = dataRes.data.data.thumb;
-      const seconds = dataRes.data.data.duration || 0;
-      const views = dataRes.data.data.views || 0;
-      const author = dataRes.data.data.channel || { name: "Unknown" };
+      const {
+        title = query,
+        url: downloadUrl,
+        thumb: thumbnail,
+        duration = 0,
+        views = 0,
+        channel = { name: "Unknown" }
+      } = dataRes.data.data;
+
+      // Check file size limit
+      const headCheck = await axios.head(downloadUrl).catch(() => null);
+      const maxSize = 25 * 1024 * 1024; // 25MB
+
+      if (headCheck && parseInt(headCheck.headers["content-length"]) > maxSize) {
+        throw new Error("❌ File size limit exceed kar gaya (25MB se zyada).");
+      }
 
       // Download thumbnail
       const thumbExt = thumbnail.endsWith(".png") ? "png" : "jpg";
@@ -81,13 +90,14 @@ module.exports = {
         thumbStream.on("error", reject);
       });
 
+      // Send info message
       await api.sendMessage({
         body:
           `🎵 ${isVideo ? "🎥 Video" : "🎧 Audio"} Info:\n\n` +
           `📌 Title: ${title}\n` +
-          `📺 Channel: ${author.name}\n` +
+          `📺 Channel: ${channel.name}\n` +
           `👁️ Views: ${formatNumber(views)}\n` +
-          `⏱️ Duration: ${formatDuration(seconds)}\n\n` +
+          `⏱️ Duration: ${formatDuration(duration)}\n\n` +
           `🔗 ${videoUrl}`,
         attachment: fs.createReadStream(thumbPath),
       }, event.threadID, () => deleteAfterTimeout(thumbPath), event.messageID);
@@ -98,17 +108,18 @@ module.exports = {
       const filePath = path.join(__dirname, "cache", `${safeTitle}.${format}`);
       const fileStream = fs.createWriteStream(filePath);
 
+      const mediaRes = await axios({
+        url: downloadUrl,
+        method: "GET",
+        responseType: "stream",
+        timeout: 60000,
+      });
+
+      mediaRes.data.pipe(fileStream);
+
       await new Promise((resolve, reject) => {
-        https.get(downloadUrl, (res) => {
-          if (res.statusCode === 200) {
-            res.pipe(fileStream);
-            fileStream.on("finish", () => {
-              fileStream.close(resolve);
-            });
-          } else {
-            reject(new Error("❌ File download failed."));
-          }
-        }).on("error", reject);
+        fileStream.on("finish", resolve);
+        fileStream.on("error", reject);
       });
 
       api.setMessageReaction("✅", event.messageID, () => {}, true);
