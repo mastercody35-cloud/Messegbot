@@ -26,9 +26,9 @@ function formatDuration(seconds) {
 module.exports = {
   config: {
     name: "music",
-    version: "1.0.0",
+    version: "1.0.1",
     hasPermssion: 0,
-    credits: "Mirrykal",
+    credits: "Mirrykal (fixed by ChatGPT)",
     description: "Download YouTube audio/video by query",
     commandCategory: "Media",
     usages: "music <query> | music video <query>",
@@ -40,8 +40,9 @@ module.exports = {
 
     const isVideo = args[0].toLowerCase() === "video";
     const query = isVideo ? args.slice(1).join(" ") : args.join(" ");
-    const processingMessage = await api.sendMessage(`🔍 "${query}" dhoondh rahi hoon...`, event.threadID);
+    await api.sendMessage(`🔍 "${query}" dhoondh raha hoon...`, event.threadID);
 
+    // Search YouTube video
     const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&maxResults=1&type=video&key=AIzaSyAGQrBQYworsR7T2gu0nYhLPSsi2WFVrgQ`;
 
     try {
@@ -52,16 +53,21 @@ module.exports = {
       const videoId = video.id.videoId;
       const videoUrl = `https://youtu.be/${videoId}`;
 
+      // 📥 Use vihangayt.me API
       const apiUrl = isVideo
-        ? `https://dev-priyanshi.onrender.com/api/ytmp4dl?url=${encodeURIComponent(videoUrl)}&quality=480`
-        : `https://dev-priyanshi.onrender.com/api/ytmp3dl?url=${encodeURIComponent(videoUrl)}&quality=128`;
+        ? `https://vihangayt.me/download/ytmp4?url=${videoUrl}`
+        : `https://vihangayt.me/download/ytmp3?url=${videoUrl}`;
 
       const dataRes = await axios.get(apiUrl);
 
-      if (!dataRes.data?.data?.download?.url) throw new Error("❌ Download URL nahi mila.");
+      if (!dataRes.data?.data?.url) throw new Error("❌ Download URL nahi mila (vihangayt).");
 
-      const { metadata, download } = dataRes.data.data;
-      const { title, thumbnail, author, views, seconds } = metadata;
+      const downloadUrl = dataRes.data.data.url;
+      const title = dataRes.data.data.title || query;
+      const thumbnail = dataRes.data.data.thumb;
+      const seconds = dataRes.data.data.duration || 0;
+      const views = dataRes.data.data.views || 0;
+      const author = dataRes.data.data.channel || { name: "Unknown" };
 
       // Download thumbnail
       const thumbExt = thumbnail.endsWith(".png") ? "png" : "jpg";
@@ -87,21 +93,20 @@ module.exports = {
       }, event.threadID, () => deleteAfterTimeout(thumbPath), event.messageID);
 
       // Download media
-      const fileUrl = download.url;
       const format = isVideo ? "mp4" : "mp3";
       const safeTitle = title.replace(/[^\w\s]/gi, "_").slice(0, 30);
       const filePath = path.join(__dirname, "cache", `${safeTitle}.${format}`);
       const fileStream = fs.createWriteStream(filePath);
 
       await new Promise((resolve, reject) => {
-        https.get(fileUrl, (res) => {
+        https.get(downloadUrl, (res) => {
           if (res.statusCode === 200) {
             res.pipe(fileStream);
             fileStream.on("finish", () => {
               fileStream.close(resolve);
             });
           } else {
-            reject(new Error("❌ File download failed"));
+            reject(new Error("❌ File download failed."));
           }
         }).on("error", reject);
       });
@@ -115,7 +120,7 @@ module.exports = {
       deleteAfterTimeout(filePath, 60000);
 
     } catch (err) {
-      console.error(err.message);
+      console.error("⛔ Error:", err.message);
       api.sendMessage(`❌ Error: ${err.message}`, event.threadID, event.messageID);
     }
   },
