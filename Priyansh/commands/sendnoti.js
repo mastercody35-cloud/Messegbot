@@ -1,76 +1,113 @@
+const fs = require('fs');
+const request = require('request');
+
 module.exports.config = {
-	name: "sendnoti",
-	version: "1.0.2",
-	hasPermssion: 2,
-	credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
-	description: "announcement from admin",
-	commandCategory: "Admin",
-	usages: "[Text]",
-	cooldowns: 5
-};
- 
-module.exports.languages = {
-	"vi": {
-		"sendSuccess": "ÄÃ£ gá»­i thÃ¡nh chá»‰ tá»›i %1 nhÃ³m",
-		"sendFail": "KhÃ´ng thá»ƒ gá»­i thÃ¡nh chá»‰ tá»›i %1 nhÃ³m"
-	},
-	"en": {
-		"sendSuccess": "Sent message to %1 thread!",
-		"sendFail": "[!] Can't send message to %1 thread"
-	}
+    name: "sendnoti",
+    version: "1.0.0",
+    hasPermssion: 2,
+    credits: "TruongMini, mod by Clarence-DK",
+    description: "",
+    commandCategory: "Tiện ích",
+    usages: "[msg]",
+    cooldowns: 5,
 }
- 
-module.exports.run = async ({ api, event, args, getText, Users }) => {
-  const name = await Users.getNameUser(event.senderID)
-const moment = require("moment-timezone");
-      var gio = moment.tz("Asia/Kolkata").format("DD/MM/YYYY || HH:mm:s");  
-if (event.type == "message_reply") {
-const request = global.nodemodule["request"];
-const fs = require('fs')
-const axios = require('axios')
-			var getURL = await request.get(event.messageReply.attachments[0].url);
- 
-					var pathname = getURL.uri.pathname;
-var ext = pathname.substring(pathname.lastIndexOf(".") + 1);
- 
-					var path = __dirname + `/cache/snoti`+`.${ext}`;
- 
- 
-var abc = event.messageReply.attachments[0].url;
-    let getdata = (await axios.get(`${abc}`, { responseType: 'arraybuffer' })).data;
- 
-  fs.writeFileSync(path, Buffer.from(getdata, 'utf-8'));
- 
- 
-	var allThread = global.data.allThreadID || [];
-	var count = 1,
-		cantSend = [];
-	for (const idThread of allThread) {
-		if (isNaN(parseInt(idThread)) || idThread == event.threadID) ""
-		else {
-			api.sendMessage({body: `` + args.join(` `) + `\n\nfrom Admin: ${name}`,attachment: fs.createReadStream(path) }, idThread, (error, info) => {
-				if (error) cantSend.push(idThread);
-			});
-			count++;
-			await new Promise(resolve => setTimeout(resolve, 500));
-		}
-	}
-	return api.sendMessage(getText("sendSuccess", count), event.threadID, () => (cantSend.length > 0 ) ? api.sendMessage(getText("sendFail", cantSend.length), event.threadID, event.messageID) : "", event.messageID);
- 
+
+let atmDir = [];
+
+const getAtm = (atm, body) => new Promise(async (resolve) => {
+    let msg = {}, attachment = [];
+    msg.body = body;
+    for(let eachAtm of atm) {
+        await new Promise(async (resolve) => {
+            try {
+                let response =  await request.get(eachAtm.url),
+                    pathName = response.uri.pathname,
+                    ext = pathName.substring(pathName.lastIndexOf(".") + 1),
+                    path = __dirname + `/cache/${eachAtm.filename}.${ext}`
+                response
+                    .pipe(fs.createWriteStream(path))
+                    .on("close", () => {
+                        attachment.push(fs.createReadStream(path));
+                        atmDir.push(path);
+                        resolve();
+                    })
+            } catch(e) { console.log(e); }
+        })
+    }
+    msg.attachment = attachment;
+    resolve(msg);
+})
+
+module.exports.handleReply = async function ({ api, event, handleReply, Users, Threads }) {
+    const moment = require("moment-timezone");
+      var gio = moment.tz("Asia/Manila").format("DD/MM/YYYY - HH:mm:s");
+    const { threadID, messageID, senderID, body } = event;
+    let name = await Users.getNameUser(senderID);
+    switch (handleReply.type) {
+        case "sendnoti": {
+            let text = `== User Reply ==\n\n『Reply』 : ${body}\n\n\nUser Name ${name}  From Group ${(await Threads.getInfo(threadID)).threadName || "Unknow"}`;
+            if(event.attachments.length > 0) text = await getAtm(event.attachments, `== User Reply ==\n\n『Reply』 : ${body}\n\n\nUser Name: ${name} From Group ${(await Threads.getInfo(threadID)).threadName || "Unknow"}`);
+            api.sendMessage(text, handleReply.threadID, (err, info) => {
+                atmDir.forEach(each => fs.unlinkSync(each))
+                atmDir = [];
+                global.client.handleReply.push({
+                    name: this.config.name,
+                    type: "reply",
+                    messageID: info.messageID,
+                    messID: messageID,
+                    threadID
+                })
+            });
+            break;
+        }
+        case "reply": {
+            let text = `MESSAGE FROM 𝑨𝑫𝑴𝑰𝑵 \n\n『Message』 : ${body}\n\n\n『Admin Name』 ${name}\n\nReply to this Message if you want to respond to this Announce`;
+            if(event.attachments.length > 0) text = await getAtm(event.attachments, `${body} MESSAGE FROM 𝑨𝑫𝑴𝑰𝑵 \n\n『Admin Name』 ${name}\n\nReply to this Message if you want to respond to this Announce.`);
+            api.sendMessage(text, handleReply.threadID, (err, info) => {
+                atmDir.forEach(each => fs.unlinkSync(each))
+                atmDir = [];
+                global.client.handleReply.push({
+                    name: this.config.name,
+                    type: "sendnoti",
+                    messageID: info.messageID,
+                    threadID
+                })
+            }, handleReply.messID);
+            break;
+        }
+    }
 }
-else {
-	var allThread = global.data.allThreadID || [];
-	var count = 1,
-		cantSend = [];
-	for (const idThread of allThread) {
-		if (isNaN(parseInt(idThread)) || idThread == event.threadID) ""
-		else {
-			api.sendMessage(`` + args.join(` `) + `\n\nfrom Admin: ${name}`, idThread, (error, info) => {
-				if (error) cantSend.push(idThread);
-			});
-			count++;
-			await new Promise(resolve => setTimeout(resolve, 500));
-		}
-	}
-	return api.sendMessage(getText("sendSuccess", count), event.threadID, () => (cantSend.length > 0 ) ? api.sendMessage(getText("sendFail", cantSend.length), event.threadID, event.messageID) : "", event.messageID); }
+
+module.exports.run = async function ({ api, event, args, Users }) {
+    const moment = require("moment-timezone");
+      var gio = moment.tz("Asia/Manila").format("DD/MM/YYYY - HH:mm:s");
+    const { threadID, messageID, senderID, messageReply } = event;
+    if (!args[0]) return api.sendMessage("Please input message", threadID);
+    let allThread = global.data.allThreadID || [];
+    let can = 0, canNot = 0;
+    let text = `MESSAGE FROM ADMIN \n\nMESSAGE:  ${args.join(" ")}\n\nADMIN NAME: ${await Users.getNameUser(senderID)} `;
+    if(event.type == "message_reply") text = await getAtm(messageReply.attachments, `MESSAGE FROM ADMIN\n\nMESSAGE:  ${args.join(" ")}\n\nADMIN NAME: ${await Users.getNameUser(senderID)}`);
+    await new Promise(resolve => {
+        allThread.forEach((each) => {
+            try {
+                api.sendMessage(text, each, (err, info) => {
+                    if(err) { canNot++; }
+                    else {
+                        can++;
+                        atmDir.forEach(each => fs.unlinkSync(each))
+                        atmDir = [];
+                        global.client.handleReply.push({
+                            name: this.config.name,
+                            type: "sendnoti",
+                            messageID: info.messageID,
+                            messID: messageID,
+                            threadID
+                        })
+                        resolve();
+                    }
+                })
+            } catch(e) { console.log(e) }
+        })
+    })
+    api.sendMessage(`Send to ${can} thread, not send to ${canNot} thread`, threadID);
 }
