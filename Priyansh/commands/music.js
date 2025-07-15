@@ -1,112 +1,86 @@
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
+const ytdlp = require('yt-dlp-exec');
+const fs = require('fs');
+const path = require('path');
 
 function deleteAfterTimeout(filePath, timeout = 60000) {
   setTimeout(() => {
-    if (fs.existsSync(filePath)) {
-      fs.unlink(filePath, (err) => {
-        if (!err) console.log(`🧹 Deleted: ${filePath}`);
-      });
-    }
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }, timeout);
 }
 
-function formatNumber(num) {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function formatDuration(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}m ${secs}s`;
+function formatDuration(s) {
+  let m = Math.floor(s / 60), sec = s % 60;
+  return `${m}m ${sec}s`;
 }
 
 module.exports = {
   config: {
     name: "music",
-    version: "1.0.1",
+    version: "2.1.0",
     hasPermssion: 0,
-    credits: "Updated by ChatGPT",
-    description: "Download YouTube audio/video using stable API",
-    commandCategory: "media",
+    credits: "Mirrykal + ChatGPT",
+    description: "Download YouTube audio/video by query (unlimited)",
+    commandCategory: "Media",
     usages: "music <query> | music video <query>",
     cooldowns: 5,
   },
 
   run: async function ({ api, event, args }) {
-    if (!args[0]) return api.sendMessage("🎵 Gana ka naam to likho! 😐", event.threadID);
+    if (!args[0]) return api.sendMessage("🎵 Gana ka naam likho!", event.threadID);
 
-    const isVideo = args[0].toLowerCase() === "video";
-    const query = isVideo ? args.slice(1).join(" ") : args.join(" ");
-    const searchKey = encodeURIComponent(query);
+    const isVideo = args[0].toLowerCase() === 'video';
+    const query = isVideo ? args.slice(1).join(' ') : args.join(' ');
 
-    const YT_API_KEY = "AIzaSyAGQrBQYworsR7T2gu0nYhLPSsi2WFVrgQ"; // working but limited quota
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchKey}&maxResults=1&type=video&key=${YT_API_KEY}`;
+    await api.sendMessage(`🔍 "${query}" dhoondh raha hoon...`, event.threadID);
 
     try {
-      const searchRes = await axios.get(searchUrl);
-      if (!searchRes.data.items.length) throw new Error("❌ Gana nahi mila.");
-
-      const video = searchRes.data.items[0];
-      const videoId = video.id.videoId;
-      const videoUrl = `https://youtu.be/${videoId}`;
-
-      const title = video.snippet.title;
-      const thumbnail = video.snippet.thumbnails.high.url;
-      const channel = video.snippet.channelTitle;
-
-      // Save thumbnail
-      const thumbExt = thumbnail.endsWith(".png") ? "png" : "jpg";
-      const thumbPath = path.join(__dirname, "cache", `${videoId}.${thumbExt}`);
-      const thumbStream = fs.createWriteStream(thumbPath);
-      const thumbImg = await axios({ url: thumbnail, responseType: "stream" });
-
-      await new Promise((resolve, reject) => {
-        thumbImg.data.pipe(thumbStream);
-        thumbStream.on("finish", resolve);
-        thumbStream.on("error", reject);
+      const info = await ytdlp(query, {
+        dumpSingleJson: true,
+        noWarnings: true,
+        noCallHome: true,
+        noCheckCertificate: true,
+        preferFreeFormats: true,
+        format: isVideo ? 'best[ext=mp4][height<=480]' : 'bestaudio[ext=m4a]/bestaudio'
       });
 
+      const downloadUrl = info.url;
+      const title = info.title || 'audio';
+      const duration = info.duration || 0;
+      const author = info.uploader || 'Unknown';
+      const videoUrl = info.webpage_url;
+      const thumbnail = info.thumbnail;
+
+      // Send thumbnail with info
+      const thumbPath = path.join(__dirname, 'cache', `${Date.now()}_thumb.jpg`);
+      const thumb = await ytdlp.exec(thumbnail, { output: thumbPath });
       await api.sendMessage({
         body:
-          `🎵 ${isVideo ? "🎥 Video" : "🎧 Audio"} Info:\n\n` +
+          `🎵 ${isVideo ? '🎥 Video' : '🎧 Audio'} Info:\n\n` +
           `📌 Title: ${title}\n` +
-          `📺 Channel: ${channel}\n` +
-          `🔗 Link: ${videoUrl}`,
-        attachment: fs.createReadStream(thumbPath),
+          `👤 Channel: ${author}\n` +
+          `⏱️ Duration: ${formatDuration(duration)}\n` +
+          `🔗 ${videoUrl}`,
+        attachment: fs.createReadStream(thumbPath)
       }, event.threadID, () => deleteAfterTimeout(thumbPath), event.messageID);
 
-      // Download media from new API
-      const apiUrl = isVideo
-        ? `https://youtube-download-api.matheusishiyama.repl.co/mp4/?url=${encodeURIComponent(videoUrl)}`
-        : `https://youtube-download-api.matheusishiyama.repl.co/mp3/?url=${encodeURIComponent(videoUrl)}`;
+      // Download media
+      const ext = isVideo ? 'mp4' : 'm4a';
+      const safeTitle = title.replace(/[^\w\s]/gi, '_').slice(0, 30);
+      const filePath = path.join(__dirname, 'cache', `${safeTitle}.${ext}`);
 
-      const fileExt = isVideo ? "mp4" : "mp3";
-      const safeTitle = title.replace(/[^\w\s]/gi, "_").slice(0, 30);
-      const filePath = path.join(__dirname, "cache", `${safeTitle}.${fileExt}`);
-      const fileStream = fs.createWriteStream(filePath);
-
-      const mediaRes = await axios({
-        url: apiUrl,
-        method: "GET",
-        responseType: "stream",
-        timeout: 60000
-      });
-
-      mediaRes.data.pipe(fileStream);
-      await new Promise((resolve, reject) => {
-        fileStream.on("finish", resolve);
-        fileStream.on("error", reject);
+      await ytdlp.exec(query, {
+        output: filePath,
+        format: isVideo ? 'best[ext=mp4][height<=480]' : 'bestaudio[ext=m4a]/bestaudio'
       });
 
       await api.sendMessage({
-        attachment: fs.createReadStream(filePath),
+        body: `✅ Lo bhai, ${isVideo ? 'video' : 'audio'} mil gaya!`,
+        attachment: fs.createReadStream(filePath)
       }, event.threadID, () => deleteAfterTimeout(filePath), event.messageID);
 
-    } catch (err) {
-      console.error(err.message);
-      return api.sendMessage(`❌ Error: ${err.message}`, event.threadID, event.messageID);
+    } catch (e) {
+      console.error(e);
+      return api.sendMessage(`❌ Error: ${e.message}`, event.threadID);
     }
-  },
+  }
 };
