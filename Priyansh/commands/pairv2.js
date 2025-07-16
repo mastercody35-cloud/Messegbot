@@ -41,7 +41,7 @@ module.exports.run = async function({ api, event, Users }) {
     ];
 
     // ✅ SAFE GIF (No Pinterest!)
-    const gifUrl = "https://media1.giphy.com/media/3o6gE5aYp3WdeFdvDi/giphy.gif";
+    const gifUrl = "https://i.ibb.co/HHPnMVz/6b0cc1c6326d1099495b6795817d6517.gif";
     const gifPath = __dirname + "/cache/love.gif";
 
     const gifData = await axios.get(gifUrl, { responseType: "arraybuffer" });
