@@ -2,8 +2,8 @@ module.exports.config = {
   name: "pairv2",
   version: "2.0.0",
   hasPermssion: 0,
-  credits: "Anup Kumar + ChatGPT + Talha❤️",
-  description: "Stylish Love Pairing",
+  credits: "Fix by Talha❤️",
+  description: "Stylish Love Pairing with ID and GIF",
   commandCategory: "Love",
   usages: "*pairv2",
   cooldowns: 0
@@ -35,23 +35,23 @@ module.exports.run = async function({ api, event, Users }) {
     const senderName = senderData.name;
     const loverName = loverData.name;
 
-    const mention = [
+    const mentions = [
       { id: senderID, tag: senderName },
       { id: loverID, tag: loverName }
     ];
 
-    // 🖼 Download cute couple gif
-    const gifUrl = "https://i.pinimg.com/originals/2f/f0/eb/2ff0eb42d62b2582c7e4dede5ac1e2e0.gif"; // replace if you want
-    const gifPath = __dirname + "/cache/couple.gif";
+    // ✅ SAFE GIF (No Pinterest!)
+    const gifUrl = "https://media1.giphy.com/media/3o6gE5aYp3WdeFdvDi/giphy.gif";
+    const gifPath = __dirname + "/cache/love.gif";
 
-    const gif = await axios.get(gifUrl, { responseType: "arraybuffer" });
-    fs.writeFileSync(gifPath, Buffer.from(gif.data, "utf-8"));
+    const gifData = await axios.get(gifUrl, { responseType: "arraybuffer" });
+    fs.writeFileSync(gifPath, Buffer.from(gifData.data, "utf-8"));
 
-    // 📝 Stylish love message
+    // 💬 Stylish pairing message
     const msg = {
       body:
-`🌸 𝗦𝗨𝗖𝗖𝗘𝗦𝗦𝗙𝗨𝗟 𝗣𝗔𝗜𝗥𝗜𝗡𝗚 💞
-━━━━━━━━━━━━━━━━━━
+`🎉 𝗦𝗨𝗖𝗖𝗘𝗦𝗦𝗙𝗨𝗟 𝗣𝗔𝗜𝗥𝗜𝗡𝗚 💘
+━━━━━━━━━━━━━━━━━━━━
 👤 𝗣𝗘𝗥𝗦𝗢𝗡 𝟭:
 🔹 Name: ${senderName}
 🔹 ID: ${senderID}
@@ -61,16 +61,19 @@ module.exports.run = async function({ api, event, Users }) {
 🔹 ID: ${loverID}
 
 ❤️ Compatibility: ${lovePercent}%
-━━━━━━━━━━━━━━━━━━
-🥰 HOPE YOU BOTH WILL STOP FLIRTING 😏
+━━━━━━━━━━━━━━━━━━━━
+💬 HOPE YOU BOTH WILL STOP FLIRTING 😏
 👑 OWNER: TALHA ❤️`,
-      mentions: mention,
+      mentions,
       attachment: fs.createReadStream(gifPath)
     };
 
-    return api.sendMessage(msg, event.threadID, () => fs.unlinkSync(gifPath));
-  } catch (e) {
-    console.log("PAIR ERROR:", e);
+    return api.sendMessage(msg, event.threadID, () => {
+      fs.unlinkSync(gifPath);
+    });
+
+  } catch (err) {
+    console.log("❌ pairv2 Error:", err);
     return api.sendMessage("❌ Error aaya pairing mein. Try again later!", event.threadID);
   }
 };
