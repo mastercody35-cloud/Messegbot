@@ -1,80 +1,83 @@
 module.exports = {
   config: {
     name: "roast",
-    aliases: ["insult", "burn"],
+    aliases: ["burn", "insult"],
     version: "2.0",
-    author: "Talha ",
-    countDown: 3,
+    author: "Owner: Talha 💀",
+    countDown: 2,
     role: 0,
-    shortDescription: "Roast someone hilariously",
-    longDescription: "Tag someone to get a funny roast",
+    shortDescription: "🔥 Roast command",
+    longDescription: "Funny 50+ line roasts for fun in group",
     category: "fun",
-    guide: "{p}roast @user"
+    guide: "{p}roast @mention"
   },
 
   onStart: async function ({ api, event }) {
-    const mention = Object.keys(event.mentions)[0];
-    if (!mention)
-      return api.sendMessage("⚠️ Tag someone to roast!", event.threadID, event.messageID);
+    const mention = Object.keys(event.mentions);
+    if (mention.length === 0) {
+      return api.sendMessage("⚠️ Tag someone to roast.\n\nExample: *roast @someone", event.threadID, event.messageID);
+    }
 
-    const name = event.mentions[mention];
+    const name = event.mentions[mention[0]].replace("@", "");
     const roasts = [
 
-      `🤣 ${name}, teri dp dekh ke to Photoshop bhi resign kar gaya.`,
-      `😂 ${name}, tu itna slow hai ke YouTube shorts bhi tere samne long videos lagti hain.`,
-      `💀 ${name}, tera fashion sense dekh ke mannequin ne bhi aankh band kar li.`,
-      `💩 ${name}, teri smile aisi lagti hai jaise network error ka emoji.`,
-      `📴 ${name}, tu itna bekaar hai ke motivational speakers bhi tera example dete hain... kya na ban'na.`,
-      `🚽 ${name}, tu group ka emoji hai — use to sab karte hain, samajhta koi nahi.`,
-      `🧠 ${name}, tera dimaag recharge card jaisa hai — scratch karne pe bhi kuch nahi milta.`,
-      `🕳️ ${name}, jab tu bolta hai na, to silence bhi volume badha leta hai.`,
-      `📱 ${name}, tera face dekh ke Face ID bhi lock lagata hai.`,
-      `🤖 ${name}, AI bhi confuse ho gayi thi: 'Error 404: Logic not found'.`,
+      // 🔥 Top 50+ Funny Roasts
+      `${name}, tu roast nahi, poora burnt toast hai. 🍞`,
+      `${name}, teri DP dekh ke log Facebook uninstall kar dete hain.`,
+      `${name}, tera sense of humor itna weak hai ke Google bhi search nahi karta.`,
+      `${name}, tu itna bekar hai ke NASA bhi tujhe space me bhejne se inkaar karta hai.`,
+      `${name}, tujhe dekh ke wifi signals bhi chali jaati hain.`,
+      `${name}, tu itna cringe hai ke Tiktok tujhe permanently ban kar de.`,
+      `${name}, teri shakal dekh ke mirror bhi turn off ho jaye.`,
+      `${name}, jab tu bolta hai to lagta hai jaise Siri ne suicide kar liya ho.`,
+      `${name}, tu itna slow hai ke snail bhi tujhe overtake kar jaye.`,
+      `${name}, tera fashion sense dekh ke mannequins bhi resign karte hain.`,
 
-      `🐸 ${name}, teri baatein sunkar frogs bhi mute ho gaye.`,
-      `🔥 ${name}, tu roast nahi, puri BBQ platter hai.`,
-      `🌪️ ${name}, tere jaise log dekh ke cyclone bhi direction change kar lete hain.`,
-      `📉 ${name}, tera confidence sensex ki tarah hamesha neeche jaata hai.`,
-      `🎃 ${name}, tu Halloween pe bina costume scary lagta hai.`,
-      `🛑 ${name}, jab tu aata hai to luck bhi "offline" ho jata hai.`,
-      `🧽 ${name}, tu itna useless hai ke sponge bhi kaam ka lagta hai.`,
-      `🥴 ${name}, tu confuse nahi karta — tu confusion ka baap hai.`,
-      `📦 ${name}, tere jokes sunke courier company ne bhi parcel bhejna band kar diya.`,
-      `🥱 ${name}, tu itna boring hai ke sleep mode bhi active ho jaye.`,
+      `${name}, tu roast nahi, puri BBQ plate hai.`,
+      `${name}, tera logic aise hai jaise Windows XP ka update.`,
+      `${name}, tu aisi mistake hai jo autocorrect bhi ignore kar deta hai.`,
+      `${name}, tu itna bekar hai ke motivational speakers bhi tujhe ignore karte hain.`,
+      `${name}, tu group ka charging cable hai – sab chahiye hota hai, koi sambhalta nahi.`,
+      `${name}, tujhme talent hai – logon ko irritate karne ka.`,
+      `${name}, tu jaise hi online aata hai, sabki battery low ho jaati hai.`,
+      `${name}, tu error ka upgraded version lagta hai.`,
+      `${name}, tujhe dekh ke dard bhi sharma jaata hai.`,
+      `${name}, tu roast nahi – live warning ho.`,
 
-      `🚫 ${name}, tu fail hone ka prototype hai.`,
-      `🎭 ${name}, tu acting kare na kare, zindagi tujhe award deti hai: "Best Background Object"`,
-      `🫥 ${name}, agar tu idea hota, to log innovation chor dete.`,
-      `📸 ${name}, filter bhi tujhe dekh ke crash ho jata hai.`,
-      `🍅 ${name}, tu roast nahi — seedha tomato ho, sirf chutney ke laayak.`,
-      `📢 ${name}, jab tu joke sunata hai, audience mute pe chali jaati hai.`,
-      `👣 ${name}, tera future Google Maps pe "not found" dikhata hai.`,
-      `🧂 ${name}, tu itna salty hai ke Lays tere naam pe flavour nikaal de.`,
-      `🔋 ${name}, tera energy level dead battery se bhi kam hai.`,
-      `🚬 ${name}, tu stress deta nahi — tu khud stress hai.`,
+      `${name}, tu itna invisible hai ke apne birthday pe bhi log bhool jaate hain.`,
+      `${name}, tu background noise hai – sabko disturb karta hai, kisi kaam ka nahi.`,
+      `${name}, tera future dark web me bhi visible nahi hai.`,
+      `${name}, tu Google pe search ho to result mile: ‘Sorry, we don’t know this trash.’`,
+      `${name}, tu vaccine ka side effect lagta hai.`,
+      `${name}, tujhe banaya kisne? Software crash kar gaya tha kya?`,
+      `${name}, jab tu paida hua tha, doctor ne bola: ‘Error 404 – soul not found.’`,
+      `${name}, tu roast nahi, full system shutdown hai.`,
+      `${name}, jab tu group me message karta hai, notifications khud hi mute ho jaati hain.`,
+      `${name}, teri baatein sun ke AirPods bhi disconnect ho jaate hain.`,
 
-      `📀 ${name}, tere jaise logon ki copy bhi recycle bin me hoti hai.`,
-      `🎮 ${name}, tu game ka tutorial bhi fail kar de.`,
-      `🪑 ${name}, jab tu group me aata hai, silence automatic hota hai.`,
-      `🫗 ${name}, tu itna light hai ke hawa bhi ignore karti hai.`,
-      `📚 ${name}, tujhe dekh ke dictionary ne new word banaya: "uselessaurus"`,
-      `🛸 ${name}, aliens bhi tujhe abduct karne se mana kar gaye.`,
-      `💳 ${name}, tu prepaid dimaag hai — khatam hone pe recharge bhi nahi hota.`,
-      `🚿 ${name}, tu itna cringe hai ke log Insta scroll karte hue ruk jaate hain... block karne ke liye.`,
-      `🎯 ${name}, tu goal nahi — distraction ka doosra naam hai.`,
-      `🪓 ${name}, tu roast nahi, poora bandook ka target hai.`,
+      `${name}, tu logic ka dushman hai.`,
+      `${name}, tu itna boring hai ke neend bhi tujhe avoid karti hai.`,
+      `${name}, tera sense of style = lagan movie ke kapde.`,
+      `${name}, tu power bank ho – khud dead, aur dusron ko bhi karta hai.`,
+      `${name}, tujhe dekh ke sad music bhi khush ho jaata hai.`,
+      `${name}, tu itna weak hai ke cartoon bhi tujhe strong dikhte hain.`,
+      `${name}, tujhe chappal nahi, direct uninstall ki zarurat hai.`,
+      `${name}, jab tu chalta hai, zameen bhi regret karti hai.`,
+      `${name}, tu itna flop hai ke background dancers bhi front pe aa jate hain.`,
+      `${name}, tera brain Google Drive pe corrupt file jaisa hai.`,
 
-      `👎 ${name}, tu itna flop hai ke TikTok ne tujhe block kar diya.`,
-      `🧢 ${name}, tu cool nahi, bas cold drink ki tarah dhoka hai.`,
-      `🦠 ${name}, tu virus nahi — tu system crash hi hai.`,
-      `🪞 ${name}, mirror bhi tujhe dekh ke toot jaata hai.`,
-      `🔇 ${name}, tu gaana hota to Spotify tujhe "no results" bolta.`,
-      `📡 ${name}, tu signal nahi — interference hai.`,
-      `🔒 ${name}, jab tu hasti hai, duniya sad ho jaati hai.`,
-      `👻 ${name}, horror movies tujhe dekh ke apna genre change kar leti hain.`,
-      `🔮 ${name}, tera future dekh ke astrologer ne profession chhod diya.`,
-      `🛜 ${name}, tu wifi pe chalta hai — kabhi connected, kabhi lost.`
+      `${name}, tujhme itna talent hai ke award: “Best Waste of Oxygen” milna chahiye.`,
+      `${name}, tu PUBG me chicken dinner nahi – raw potato hai.`,
+      `${name}, tujhe roast karne ke liye to fire brigade bulani padegi.`,
+      `${name}, tu filter se nahi, miracle se sudhar sakta hai.`,
+      `${name}, tu group ka dustbin hai – sab kuch daal diya jata hai.`,
+      `${name}, teri baat sun ke AI bhi shut down ho gayi.`,
+      `${name}, tu roast nahi – burnt hard disk hai.`,
+      `${name}, tu bluetooth hai – kaam ka nahi, connect bhi nahi hota.`,
+      `${name}, tu logic nahi – full lag hai.`,
+      `${name}, tu admin ka friend hota to group delete kar deta.`,
 
+      `Aur yaad rakh, Owner: Talha ne ye roast personally approve kiya hai. 🔥`
     ];
 
     const burn = roasts[Math.floor(Math.random() * roasts.length)];
