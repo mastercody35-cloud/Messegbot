@@ -1,11 +1,11 @@
 module.exports.config = {
   name: "help",
-  version: "1.0.2",
+  version: "1.1.0",
   hasPermssion: 0,
-  credits: "Leiam Nash",
-  description: "commands list",
+  credits: "Talha ✨",
+  description: "Stylish commands list",
   commandCategory: "system",
-  usages: "module name",
+  usages: "help [name | page]",
   cooldowns: 1,
   envConfig: {
     autoUnsend: false,
@@ -15,11 +15,10 @@ module.exports.config = {
 
 module.exports.languages = {
   "en": {
-    "moduleInfo": "─────[ %1 ]──────\n\nUsage: %3\nCategory: %4\nWaiting time: %5 seconds(s)\nPermission: %6\nDescription: %2\n\nModule coded by %7",
-    "helpList": '[ There are %1 commands on this bot, Use: "%2help nameCommand" to know how to use! ]',
+    "moduleInfo": `❖ 𝐂𝐨𝐦𝐦𝐚𝐧𝐝 ➟ %1\n\n📄 𝐃𝐞𝐬𝐜: %2\n⚙️ 𝐔𝐬𝐚𝐠𝐞: %3\n📂 𝐂𝐚𝐭𝐞𝐠𝐨𝐫𝐲: %4\n⏱ 𝐂𝐨𝐨𝐥𝐝𝐨𝐰𝐧: %5s\n🔐 𝐏𝐞𝐫𝐦𝐢𝐬𝐬𝐢𝐨𝐧: %6\n👑 𝐂𝐫𝐞𝐝𝐢𝐭: %7`,
     "user": "User",
-        "adminGroup": "Admin group",
-        "adminBot": "Admin bot"
+    "adminGroup": "Group Admin",
+    "adminBot": "Bot Admin"
   }
 };
 
@@ -33,12 +32,23 @@ module.exports.handleEvent = function ({ api, event, getText }) {
   const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
   const command = commands.get(splitBody[1].toLowerCase());
   const prefix = (threadSetting.hasOwnProperty("PREFIX")) ? threadSetting.PREFIX : global.config.PREFIX;
-  return api.sendMessage(getText("moduleInfo", command.config.name, command.config.description, `${prefix}${command.config.name} ${(command.config.usages) ? command.config.usages : ""}`, command.config.commandCategory, command.config.cooldowns, ((command.config.hasPermssion == 0) ? getText("user") : (command.config.hasPermssion == 1) ? getText("adminGroup") : getText("adminBot")), command.config.credits), threadID, messageID);
-}
 
-module.exports. run = function({ api, event, args, getText }) {
+  return api.sendMessage(
+    getText("moduleInfo",
+      command.config.name,
+      command.config.description,
+      `${prefix}${command.config.name} ${command.config.usages || ""}`,
+      command.config.commandCategory,
+      command.config.cooldowns,
+      command.config.hasPermssion == 0 ? getText("user") : (command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot")),
+      command.config.credits
+    ), threadID, messageID
+  );
+};
+
+module.exports.run = async function ({ api, event, args, getText }) {
   const axios = require("axios");
-  const request = require('request');
+  const request = require("request");
   const fs = require("fs-extra");
   const { commands } = global.client;
   const { threadID, messageID } = event;
@@ -46,80 +56,68 @@ module.exports. run = function({ api, event, args, getText }) {
   const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
   const { autoUnsend, delayUnsend } = global.configModule[this.config.name];
   const prefix = (threadSetting.hasOwnProperty("PREFIX")) ? threadSetting.PREFIX : global.config.PREFIX;
-if (args[0] == "all") {
-    const command = commands.values();
-    var group = [], msg = "";
-    for (const commandConfig of command) {
-      if (!group.some(item => item.group.toLowerCase() == commandConfig.config.commandCategory.toLowerCase())) group.push({ group: commandConfig.config.commandCategory.toLowerCase(), cmds: [commandConfig.config.name] });
-      else group.find(item => item.group.toLowerCase() == commandConfig.config.commandCategory.toLowerCase()).cmds.push(commandConfig.config.name);
-    }
-    group.forEach(commandGroup => msg += `☂︎ ${commandGroup.group.charAt(0).toUpperCase() + commandGroup.group.slice(1)} \n${commandGroup.cmds.join(' • ')}\n\n`);
 
-    return axios.get('https://apikanna.maduka9.repl.co').then(res => {
-    let ext = res.data.data.substring(res.data.data.lastIndexOf(".") + 1);
-      let admID = "100071522536302";
-
-      api.getUserInfo(parseInt(admID), (err, data) => {
-      if(err){ return console.log(err)}
-     var obj = Object.keys(data);
-    var firstname = data[obj].name.replace("@", "");
-    let callback = function () {
-        api.sendMessage({ body:`𝗖𝗼𝗺𝗺𝗮𝗻𝗱 𝗟𝗶𝘀𝘁\n\n` + msg + `\nSpamming the bot are strictly prohibited\n\nTotal Commands: ${commands.size}\n\nFor All Cmds Type help2\n\nDeveloper:\n༄𒁍≛⃝Talha`, mentions: [{
-                           tag: firstname,
-                           id: admID,
-                           fromIndex: 0,
-                 }],
-            attachment: fs.createReadStream(__dirname + `/cache/472.${ext}`)
-        }, event.threadID, (err, info) => {
-        fs.unlinkSync(__dirname + `/cache/472.${ext}`);
-        if (autoUnsend == false) {
-            setTimeout(() => { 
-                return api.unsendMessage(info.messageID);
-            }, delayUnsend * 1000);
-        }
-        else return;
-    }, event.messageID);
-        }
-         request(res.data.data).pipe(fs.createWriteStream(__dirname + `/cache/472.${ext}`)).on("close", callback);
-     })
-      })
-};
   if (!command) {
-    const arrayInfo = [];
     const page = parseInt(args[0]) || 1;
-    const numberOfOnePage = 10;
-    let i = 0;
-    let msg = "";
+    const perPage = 10;
+    const total = commands.size;
+    const totalPages = Math.ceil(total / perPage);
+    let i = (page - 1) * perPage;
 
-    for (var [name, value] of (commands)) {
-      name += ``;
-      arrayInfo.push(name);
-    }
+    const list = Array.from(commands.keys())
+      .sort()
+      .slice(i, i + perPage)
+      .map(cmd => `😈  「 ${++i} 」${prefix}${cmd}`)
+      .join("\n");
 
-    arrayInfo.sort((a, b) => a.data - b.data);
+    const body =
+`𝐎𝐰𝐧𝐞𝐫 ➻   𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧\n
+${list}
 
-const first = numberOfOnePage * page - numberOfOnePage;
-    i = first;
-    const helpView = arrayInfo.slice(first, first + numberOfOnePage);
+PAGE 𒁍 (${page}/${totalPages})
 
+𝗖𝗼𝗺𝗺𝗮𝗻𝗱 𝗗𝗲𝘁𝗮𝗶𝗹 ➠ help [command]
+𝗔𝗹𝗹 𝗖𝗺𝗱𝘀 ➠ help all
 
-    for (let cmds of helpView) msg += `「 ${++i} 」᭄❤️‍🔥➺${global.config.PREFIX}${cmds}\n`;
+● ──────────────────── ●
 
-    const siu = `★𝗖𝗼𝗺𝗺𝗮𝗻𝗱 𝗟𝗶𝘀𝘁★`;
+𝐌𝐘 𝐎𝐰𝐧𝐞𝐑 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧 .... < 𝐄𝐃𝐈𝐓 >
+𝐘𝐞 𝐁𝐨𝐓 𝐒𝐢𝐫𝐅 𝐎𝐰𝐧𝐞𝐑 𝐊 𝐋𝐢𝐘𝐞 𝐇
+𝐌𝐮𝐣𝐇𝐞 𝐀𝐚𝐩 𝐋𝐨𝐆𝐨 𝐊𝐨 𝐇𝐚𝐬𝐚𝐍𝐞 𝐊 𝐋𝐢𝐘𝐞 𝐁𝐚𝐧𝐘𝐚 𝐆𝐲𝐚 𝐇
+𝐓𝐨𝐇 𝐇𝐚𝐩𝐩𝐘 𝐑𝐞𝐇𝐚𝐍𝐀
+𝐀𝐩𝐤𝐚 𝐀𝐩𝐧𝐚 𝐎𝐰𝐧𝐞𝐑 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧
 
- const text = `\n𝐏𝐀𝐆𝐄 (${page}/${Math.ceil(arrayInfo.length/numberOfOnePage)})\nFor All Cmds Type Help2\n\n𝗠𝗮𝗱𝗲 𝗕𝘆: ༄𒁍≛⃝𝙏𝙖𝙡𝙃𝙖\n\n★᭄𝗖𝗿𝗲𝗱𝗶𝘁'𝘀  ཫ    ༄𒁍≛⃝𝙏𝙖𝙡𝙃𝙖`;
-    var link = [
-"https://i.imgur.com/oQWy3Ax.jpg", 
-"https://i.imgur.com/oQWy3Ax.jpg"
-      ]
-     var callback = () => api.sendMessage({ body: siu + "\n\n" + msg  + text, attachment: fs.createReadStream(__dirname + "/cache/leiamnashelp.jpg")}, event.threadID, () => fs.unlinkSync(__dirname + "/cache/leiamnashelp.jpg"), event.messageID);
-    return request(encodeURI(link[Math.floor(Math.random() * link.length)])).pipe(fs.createWriteStream(__dirname + "/cache/leiamnashelp.jpg")).on("close", () => callback());
-  } 
-const leiamname = getText("moduleInfo", command.config.name, command.config.description, `${(command.config.usages) ? command.config.usages : ""}`, command.config.commandCategory, command.config.cooldowns, ((command.config.hasPermssion == 0) ? getText("user") : (command.config.hasPermssion == 1) ? getText("adminGroup") : getText("adminBot")), command.config.credits);
+● ─────────────────── ●`;
 
-  var link = [ "https://i.imgur.com/oQWy3Ax.jpg", 
-  "https://i.imgur.com/oQWy3Ax.jpg"
-  ]
-    var callback = () => api.sendMessage({ body: leiamname, attachment: fs.createReadStream(__dirname + "/cache/leiamnashelp.jpg")}, event.threadID, () => fs.unlinkSync(__dirname + "/cache/leiamnashelp.jpg"), event.messageID);
-    return request(encodeURI(link[Math.floor(Math.random() * link.length)])).pipe(fs.createWriteStream(__dirname + "/cache/leiamnashelp.jpg")).on("close", () => callback());
+    const img = "https://i.imgur.com/oQWy3Ax.jpg";
+    const path = __dirname + "/cache/help.jpg";
+
+    request(encodeURI(img)).pipe(fs.createWriteStream(path)).on("close", () => {
+      api.sendMessage({
+        body,
+        attachment: fs.createReadStream(path)
+      }, threadID, () => fs.unlinkSync(path), messageID);
+    });
+    return;
+  }
+
+  const infoText = getText("moduleInfo",
+    command.config.name,
+    command.config.description,
+    `${prefix}${command.config.name} ${command.config.usages || ""}`,
+    command.config.commandCategory,
+    command.config.cooldowns,
+    command.config.hasPermssion == 0 ? getText("user") : (command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot")),
+    command.config.credits
+  );
+
+  const img = "https://i.imgur.com/oQWy3Ax.jpg";
+  const path = __dirname + "/cache/help.jpg";
+
+  request(encodeURI(img)).pipe(fs.createWriteStream(path)).on("close", () => {
+    api.sendMessage({
+      body: infoText,
+      attachment: fs.createReadStream(path)
+    }, threadID, () => fs.unlinkSync(path), messageID);
+  });
 };
