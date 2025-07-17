@@ -5,52 +5,48 @@ const path = require("path");
 
 module.exports.config = {
   name: "music",
-  version: "2.0.0",
+  version: "1.0.1",
   hasPermssion: 0,
   credits: "TalhaGPT",
   description: "Play music from YouTube",
   commandCategory: "media",
-  usages: "[song name]",
+  usages: "[song name or YouTube link]",
   cooldowns: 5
 };
 
 module.exports.run = async function ({ api, event, args }) {
-  const query = args.join(" ");
-  if (!query) return api.sendMessage("🎵 Please provide a song name.", event.threadID);
+  const search = args.join(" ");
+  if (!search) return api.sendMessage("🎵 Please enter a song name or YouTube link.", event.threadID, event.messageID);
 
-  const msg = await api.sendMessage("🔍 Searching for your song...", event.threadID);
+  const msgID = await api.sendMessage("🔍 Searching for your song...", event.threadID);
 
   try {
-    const searchResult = await yts(query);
-    const video = searchResult.videos[0];
-    if (!video) return api.sendMessage("❌ No results found.", event.threadID);
+    const result = await yts(search);
+    const video = result.videos[0];
+    if (!video) return api.sendMessage("❌ Song not found.", event.threadID, event.messageID);
 
-    const videoUrl = video.url;
-    const title = video.title;
-    const thumb = video.thumbnail;
+    const res = await axios.get(`https://youtube-mp3-download.vercel.app/api/v1?url=${video.url}`);
+    if (!res.data || !res.data.link) return api.sendMessage("❌ Failed to fetch audio.", event.threadID, event.messageID);
 
-    const apiRes = await axios.get(`https://youtube-mp3-download.vercel.app/api/v1?url=${videoUrl}`);
-    const audioUrl = apiRes.data.link;
+    const audioPath = path.join(__dirname, `cache/${event.senderID}_music.mp3`);
+    const audioStream = await axios.get(res.data.link, { responseType: 'stream' });
 
-    const filePath = path.join(__dirname, `/cache/${event.senderID}_music.mp3`);
-    const audioStream = (await axios.get(audioUrl, { responseType: "stream" })).data;
-
-    const writer = fs.createWriteStream(filePath);
-    audioStream.pipe(writer);
+    const writer = fs.createWriteStream(audioPath);
+    audioStream.data.pipe(writer);
 
     writer.on("finish", () => {
       api.sendMessage({
-        body: `🎶 ${title}`,
-        attachment: fs.createReadStream(filePath)
-      }, event.threadID, () => fs.unlinkSync(filePath));
+        body: `🎶 Now Playing: ${video.title}`,
+        attachment: fs.createReadStream(audioPath)
+      }, event.threadID, () => fs.unlinkSync(audioPath));
     });
 
     writer.on("error", () => {
-      api.sendMessage("❌ Error saving the audio.", event.threadID);
+      api.sendMessage("❌ Error saving audio file.", event.threadID);
     });
 
-  } catch (err) {
-    console.error("ERROR:", err);
-    api.sendMessage("❌ Failed to process the request.", event.threadID);
+  } catch (e) {
+    console.log(e);
+    return api.sendMessage("⚠️ Error occurred while fetching music.", event.threadID);
   }
 };
