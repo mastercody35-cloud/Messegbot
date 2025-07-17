@@ -1,59 +1,61 @@
 const axios = require("axios");
-const fs = require("fs-extra");
-const yts = require("yt-search");
+const fs = require("fs");
 const path = require("path");
 
-module.exports.config = {
-  name: "music",
-  version: "1.1.0",
-  hasPermssion: 0,
-  credits: "TalhaGPT",
-  description: "Play music from YouTube",
-  commandCategory: "media",
-  usages: "[song name]",
-  cooldowns: 5
-};
+module.exports = {
+  config: {
+    name: "music",
+    aliases: ["yt", "yta"],
+    version: "1.0",
+    author: "Talha + ChatGPT",
+    countDown: 5,
+    role: 0,
+    shortDescription: "Download YouTube audio",
+    longDescription: "Download a YouTube song by title or link",
+    category: "media",
+    guide: "{p}music <song name or YouTube link>"
+  },
 
-module.exports.run = async function ({ api, event, args }) {
-  const query = args.join(" ");
-  if (!query) return api.sendMessage("❌ Song name likho bhai!", event.threadID);
+  onStart: async function ({ api, event, args }) {
+    const query = args.join(" ");
+    if (!query)
+      return api.sendMessage("❌ Please provide a song name or YouTube link.", event.threadID, event.messageID);
 
-  api.sendMessage("🔍 Dhoondh raha hoon gaana...", event.threadID, async (err, info) => {
     try {
-      const searchResult = await yts(query);
-      const video = searchResult.videos[0];
-      if (!video) return api.sendMessage("❌ Koi gaana nahi mila.", event.threadID);
+      const msg = await api.sendMessage("🔍 Searching for your song...", event.threadID);
 
-      const videoId = video.videoId;
-      const apiURL = `https://api.vevioz.com/api/button/mp3/${videoId}`;
+      const res = await axios.get(`https://api.akuari.my.id/downloader/ytaudio?link=${encodeURIComponent(query)}`);
+      const data = res.data;
 
-      const page = await axios.get(apiURL);
-      const regex = /<a href="(https:\/\/[^"]+)"[^>]*>Download<\/a>/;
-      const match = regex.exec(page.data);
+      if (!data || !data.title || !data.url)
+        return api.sendMessage("❌ Unable to fetch the song. Try again.", event.threadID, event.messageID);
 
-      if (!match || !match[1]) return api.sendMessage("❌ Download link nahi mila.", event.threadID);
+      const audioUrl = data.url;
+      const title = data.title;
+      const thumb = data.thumb;
+      const filename = `${title}.mp3`;
+      const filepath = path.join(__dirname, "cache", filename);
 
-      const downloadLink = match[1];
-      const filePath = path.join(__dirname, `/cache/music_${event.senderID}.mp3`);
+      // Download audio
+      const writer = fs.createWriteStream(filepath);
+      const audioRes = await axios.get(audioUrl, { responseType: "stream" });
+      audioRes.data.pipe(writer);
 
-      const response = await axios.get(downloadLink, { responseType: "stream" });
-      const writer = fs.createWriteStream(filePath);
-      response.data.pipe(writer);
-
-      writer.on("finish", () => {
-        api.sendMessage({
-          body: `🎵 Gaana mil gaya: ${video.title}`,
-          attachment: fs.createReadStream(filePath)
-        }, event.threadID, () => fs.unlinkSync(filePath));
+      writer.on("finish", async () => {
+        const message = {
+          body: `🎶 Title: ${title}\n📥 Downloaded successfully!`,
+          attachment: fs.createReadStream(filepath)
+        };
+        api.sendMessage(message, event.threadID, () => fs.unlinkSync(filepath), event.messageID);
       });
 
       writer.on("error", () => {
-        api.sendMessage("❌ File save nahi hui.", event.threadID);
+        api.sendMessage("❌ Error downloading audio.", event.threadID, event.messageID);
       });
 
-    } catch (err) {
-      console.error(err);
-      return api.sendMessage("⚠️ Error: Gaana fetch nahi hua.", event.threadID);
+    } catch (e) {
+      console.error(e);
+      api.sendMessage("❌ Error occurred while fetching music.", event.threadID, event.messageID);
     }
-  });
+  }
 };
