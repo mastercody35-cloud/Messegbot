@@ -1,61 +1,112 @@
+const fetch = require("node-fetch");
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const ytSearch = require("yt-search");
 
 module.exports = {
   config: {
     name: "music",
-    aliases: ["yt", "yta"],
-    version: "1.0",
-    author: "Talha + ChatGPT",
-    countDown: 5,
-    role: 0,
-    shortDescription: "Download YouTube audio",
-    longDescription: "Download a YouTube song by title or link",
-    category: "media",
-    guide: "{p}music <song name or YouTube link>"
+    version: "1.0.1",
+    hasPermssion: 0,
+    credits: "AADI SHRIVTASTAV",
+    description: "Download YouTube song from keyword search and link",
+    commandCategory: "Media",
+    usages: "[songName] [type]",
+    cooldowns: 5,
+    dependencies: {
+      "node-fetch": "",
+      "yt-search": "",
+    },
   },
 
-  onStart: async function ({ api, event, args }) {
-    const query = args.join(" ");
-    if (!query)
-      return api.sendMessage("❌ Please provide a song name or YouTube link.", event.threadID, event.messageID);
+  run: async function ({ api, event, args }) {
+    let songName, type;
+
+    if (
+      args.length > 1 &&
+      (args[args.length - 1] === "audio" || args[args.length - 1] === "video")
+    ) {
+      type = args.pop();
+      songName = args.join(" ");
+    } else {
+      songName = args.join(" ");
+      type = "audio";
+    }
+
+    const processingMessage = await api.sendMessage(
+      "✅ Processing your request. Please wait...",
+      event.threadID,
+      null,
+      event.messageID
+    );
 
     try {
-      const msg = await api.sendMessage("🔍 Searching for your song...", event.threadID);
+      // Search for the song on YouTube
+      const searchResults = await ytSearch(songName);
+      if (!searchResults || !searchResults.videos.length) {
+        throw new Error("No results found for your search query.");
+      }
 
-      const res = await axios.get(`https://api.akuari.my.id/downloader/ytaudio?link=${encodeURIComponent(query)}`);
-      const data = res.data;
+      // Get the top result from the search
+      const topResult = searchResults.videos[0];
+      const videoId = topResult.videoId;
 
-      if (!data || !data.title || !data.url)
-        return api.sendMessage("❌ Unable to fetch the song. Try again.", event.threadID, event.messageID);
+      // Construct API URL for downloading the top result
+      const apiKey = "priyansh-here";
+      const apiUrl = `https://priyanshu-ai.onrender.com/youtube?id=${videoId}&type=${type}&apikey=${apiKey}`;
 
-      const audioUrl = data.url;
-      const title = data.title;
-      const thumb = data.thumb;
-      const filename = `${title}.mp3`;
-      const filepath = path.join(__dirname, "cache", filename);
+      api.setMessageReaction("⌛", event.messageID, () => {}, true);
 
-      // Download audio
-      const writer = fs.createWriteStream(filepath);
-      const audioRes = await axios.get(audioUrl, { responseType: "stream" });
-      audioRes.data.pipe(writer);
+      // Get the direct download URL from the API
+      const downloadResponse = await axios.get(apiUrl);
+      const downloadUrl = downloadResponse.data.downloadUrl;
 
-      writer.on("finish", async () => {
-        const message = {
-          body: `🎶 Title: ${title}\n📥 Downloaded successfully!`,
-          attachment: fs.createReadStream(filepath)
-        };
-        api.sendMessage(message, event.threadID, () => fs.unlinkSync(filepath), event.messageID);
-      });
+      // Set request headers
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Referer': 'https://cnvmp3.com/',
+        'Cookie': '_ga=GA1.1.1062081074.1735238555; _ga_MF283RRQCW=GS1.1.1735238554.1.1.1735239728.0.0.0',
+      };
 
-      writer.on("error", () => {
-        api.sendMessage("❌ Error downloading audio.", event.threadID, event.messageID);
-      });
+      const response = await fetch(downloadUrl, { headers });
 
-    } catch (e) {
-      console.error(e);
-      api.sendMessage("❌ Error occurred while fetching music.", event.threadID, event.messageID);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch song. Status code: ${response.status}`);
+      }
+
+      // Set the filename based on the song title and type
+      const filename = `${topResult.title}.${type === "audio" ? "mp3" : "mp4"}`;
+      const downloadPath = path.join(__dirname, filename);
+
+      const songBuffer = await response.buffer();
+
+      // Save the song file locally
+      fs.writeFileSync(downloadPath, songBuffer);
+
+      api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+      await api.sendMessage(
+        {
+          attachment: fs.createReadStream(downloadPath),
+          body: `🖤 Title: ${topResult.title}\n\n Here is your ${type === "audio" ? "audio" : "video"} 🎧:`,
+        },
+        event.threadID,
+        () => {
+          fs.unlinkSync(downloadPath);
+          api.unsendMessage(processingMessage.messageID);
+        },
+        event.messageID
+      );
+    } catch (error) {
+      console.error(`Failed to download and send song: ${error.message}`);
+      api.sendMessage(
+        `Failed to download song: ${error.message}`,
+        event.threadID,
+        event.messageID
+      );
     }
-  }
+  },
 };
