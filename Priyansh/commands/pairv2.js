@@ -5,7 +5,7 @@ module.exports.config = {
   credits: "✨ Talha Pathan 💖",
   description: "Stylish love pairing command with fancy style",
   commandCategory: "💑 Love",
-  usages: "*pair2",
+  usages: "pair",
   cooldowns: 10
 };
 
