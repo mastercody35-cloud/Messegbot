@@ -1,102 +1,103 @@
 module.exports.config = {
   name: "pairv2",
-  version: "3.0.0",
+  version: "3.1.0",
   hasPermssion: 0,
-  credits: "✨ Fix by Talha ❤️",
-  description: "💘 Stylish Love Pairing with Profile Images & Romantic Text",
-  commandCategory: "💑 Love",
+  credits: "Talha❤️",
+  description: "Pair two users with custom LOVE image output",
+  commandCategory: "Love",
   usages: "*pairv2",
   cooldowns: 0
 };
 
 module.exports.run = async function ({ api, event, Users }) {
-  const axios = global.nodemodule["axios"];
-  const fs = global.nodemodule["fs-extra"];
-  const request = require("request");
+  const axios = require("axios");
+  const fs = require("fs-extra");
+  const Canvas = require("canvas");
+  const path = require("path");
+  const fetch = require("node-fetch");
 
   try {
-    // 🌟 Get thread info and filter participants
     const threadInfo = await api.getThreadInfo(event.threadID);
     const senderID = event.senderID;
     const botID = api.getCurrentUserID();
-
     const participants = threadInfo.participantIDs.filter(id => id !== botID && id !== senderID);
+
     if (participants.length === 0) {
       return api.sendMessage("❌ Pair banane ke liye koi aur member nahi mila.", event.threadID);
     }
 
-    // 💘 Select random lover and get their data
     const loverID = participants[Math.floor(Math.random() * participants.length)];
     const lovePercent = Math.floor(Math.random() * 101);
 
-    const senderData = await Users.getData(senderID);
-    const loverData = await Users.getData(loverID);
-
-    const senderName = senderData.name;
-    const loverName = loverData.name;
+    const senderName = (await Users.getData(senderID)).name;
+    const loverName = (await Users.getData(loverID)).name;
 
     const mentions = [
       { id: senderID, tag: senderName },
       { id: loverID, tag: loverName }
     ];
 
-    // 🖼️ Download profile pictures
-    const senderAvatar = `https://graph.facebook.com/${senderID}/picture?type=large`;
-    const loverAvatar = `https://graph.facebook.com/${loverID}/picture?type=large`;
-
-    const img1 = __dirname + `/cache/${senderID}.png`;
-    const img2 = __dirname + `/cache/${loverID}.png`;
-
-    const downloadImg = (url, path) =>
-      new Promise(resolve => request(url).pipe(fs.createWriteStream(path)).on("close", resolve));
-
-    await downloadImg(senderAvatar, img1);
-    await downloadImg(loverAvatar, img2);
-
-    // 💖 Cute GIF for love theme
-    const gifURL = "https://i.ibb.co/HHPnMVz/6b0cc1c6326d1099495b6795817d6517.gif";
-    const gifPath = __dirname + "/cache/love.gif";
-
-    const gif = await axios.get(gifURL, { responseType: "arraybuffer" });
-    fs.writeFileSync(gifPath, Buffer.from(gif.data, "utf-8"));
-
-    // 💌 Romantic Message
-    const msg = {
-      body:
-`🌸💕 𝗢𝘄𝗻𝗲𝗿 ➻ 𝙊𝙬𝙣𝙚𝙧 ➻ ❤️‍🔥 𝙏𝙖𝙡𝙝𝙖 𝙋𝙖𝙩𝙝𝙖𝙣 ❤️‍🔥
-
-[•|• 𝑨𝒏𝒌𝒉𝒐 𝒎𝒆 𝒃𝒂𝒔𝒂𝒍𝒖 𝒕𝒖𝒋𝒉𝒌𝒐. 💙💞 
-     𝑺𝒉𝒆𝒆𝒔𝒉𝒆 𝒎𝒆 𝒕𝒆𝒓𝒂𝒅𝒆𝒆𝒅𝒂𝒂𝒓 𝒉𝒐..💗🥰🐬 •|•]
-
-✦──────── 💝 ────────✦
-
-[•|• 𝑨𝒌 𝒘𝒂𝒒𝒕 𝒆𝒔𝒂 𝒂𝒂𝒚𝒆 𝒋𝒊𝒏𝒅𝒈𝒊 𝒎𝒆 𝒌𝒊𝒊... 💚💜 
-     𝒕𝒖𝒋𝒉𝒌𝒐 𝒗 𝒉𝒖𝒎𝒔𝒆 𝒑𝒚𝒂𝒂𝒓 𝒉𝒐 .. 💜❤️✨ •|•]
-
-✦──────── 💝 ────────✦
-
-👤 Name 1: ${senderName}
-🆔 ID: ${senderID}
-
-👤 Name 2: ${loverName}
-🆔 ID: ${loverID}
-
-🌸 The odds are: 【${lovePercent}%】
-
-💘 𝙃𝙊𝙋𝙀 𝙔𝙊𝙐 𝘽𝙊𝙏𝙃 𝙒𝙄𝙇𝙇 𝙎𝙏𝙊𝙋 𝙁𝙇𝙄𝙍𝙏𝙄𝙉𝙂 😏
-👑 𝙊𝙒𝙉𝙀𝙍: ✨ 𝗧𝗔𝗟𝗛𝗔 ✨`,
-      mentions,
-      attachment: fs.createReadStream(gifPath)
+    // 🖼️ Load DPs
+    const getAvatar = async (uid) => {
+      const res = await axios.get(`https://graph.facebook.com/${uid}/picture?width=512&height=512&redirect=false`);
+      const url = res.data.data.url;
+      const response = await fetch(url);
+      return await Canvas.loadImage(await response.buffer());
     };
 
-    return api.sendMessage(msg, event.threadID, () => {
-      fs.unlinkSync(gifPath);
-      fs.unlinkSync(img1);
-      fs.unlinkSync(img2);
+    const avatar1 = await getAvatar(senderID);
+    const avatar2 = await getAvatar(loverID);
+
+    // 📸 Load background
+    const bgPath = path.join(__dirname, "assets", "love_template.jpg");
+    const bg = await Canvas.loadImage(bgPath);
+
+    const canvas = Canvas.createCanvas(bg.width, bg.height);
+    const ctx = canvas.getContext("2d");
+
+    // 🖼️ Draw background
+    ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+
+    // 🔵 Circular crop helper
+    const drawCircularImage = (img, x, y, size) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(img, x, y, size, size);
+      ctx.restore();
+    };
+
+    // 🎯 Position for avatars
+    drawCircularImage(avatar1, 120, 120, 300); // left
+    drawCircularImage(avatar2, canvas.width - 420, 120, 300); // right
+
+    // 💬 Add text
+    ctx.font = "40px Arial";
+    ctx.fillStyle = "#ff2d75";
+    ctx.fillText(`${senderName}`, 120, 450);
+    ctx.fillText(`${loverName}`, canvas.width - 420, 450);
+
+    ctx.font = "bold 50px Courier";
+    ctx.fillStyle = "#e60073";
+    ctx.fillText(`❤️ Match: ${lovePercent}% ❤️`, canvas.width / 2 - 220, 550);
+
+    // 📤 Save and send image
+    const outputPath = path.join(__dirname, "cache", `pair-${event.senderID}.png`);
+    const out = fs.createWriteStream(outputPath);
+    const stream = canvas.createPNGStream();
+    stream.pipe(out);
+    out.on("finish", () => {
+      api.sendMessage({
+        body: `💘 𝗟𝗢𝗩𝗘 𝗣𝗔𝗜𝗥𝗜𝗡𝗚 💘\n\n👤 ${senderName}\n❤️ ${lovePercent}% Love\n👤 ${loverName}`,
+        mentions,
+        attachment: fs.createReadStream(outputPath)
+      }, event.threadID, () => fs.unlinkSync(outputPath));
     });
 
   } catch (err) {
-    console.log("❌ pairv2 Error:", err);
-    return api.sendMessage("❌ Error aaya pairing mein. Try again later!", event.threadID);
+    console.log("❌ Error in pairv2:", err);
+    api.sendMessage("❌ Error aaya image banate waqt.", event.threadID);
   }
 };
