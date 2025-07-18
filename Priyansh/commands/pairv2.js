@@ -1,89 +1,67 @@
-const fs = require("fs-extra");
-const axios = require("axios");
-const Canvas = require("canvas");
-const path = require("path");
-
 module.exports.config = {
-  name: "pairv2",
-  version: "3.0.3",
+  name: "pair",
+  version: "1.0.0",
   hasPermssion: 0,
-  credits: "✨ Fix by Talha ❤️",
-  description: "💘 Stylish Pair with Center Love & Circular DPs",
+  credits: "✨ Talha Pathan 💖",
+  description: "Stylish love pairing command with fancy style",
   commandCategory: "💑 Love",
-  usages: "*pairv2",
-  cooldowns: 0
+  usages: "pair",
+  cooldowns: 10
 };
 
-module.exports.run = async function ({ api, event, Users }) {
-  try {
-    const threadInfo = await api.getThreadInfo(event.threadID);
-    const senderID = event.senderID;
-    const botID = api.getCurrentUserID();
+module.exports.run = async function({ api, event, Threads, Users }) {
+  const axios = global.nodemodule["axios"];
+  const fs = global.nodemodule["fs-extra"];
 
-    const participants = threadInfo.participantIDs.filter(id => id !== botID && id !== senderID);
-    if (participants.length === 0)
-      return api.sendMessage("❌ Pair banane ke liye koi aur member nahi mila.", event.threadID);
+  const { participantIDs } = (await Threads.getData(event.threadID)).threadInfo;
+  const botID = api.getCurrentUserID();
+  const senderID = event.senderID;
+  const senderName = (await Users.getData(senderID)).name;
+  const otherUserIDs = participantIDs.filter(id => id !== botID && id !== senderID);
+  const loverID = otherUserIDs[Math.floor(Math.random() * otherUserIDs.length)];
+  const loverName = (await Users.getData(loverID)).name;
 
-    const loverID = participants[Math.floor(Math.random() * participants.length)];
-    const lovePercent = Math.floor(Math.random() * 101);
+  const compatibility = Math.floor(Math.random() * 101);
+  const gifLinks = [
+    "https://i.pinimg.com/originals/42/9a/89/429a890a39e70d522d52c7e52bce8535.gif",
+    "https://i.imgur.com/HvPID5q.gif",
+    "https://i.pinimg.com/originals/9c/94/78/9c9478bb26b2160733ce0c10a0e10d10.gif",
+    "https://i.pinimg.com/originals/9d/0d/38/9d0d38c79b9fcf05f3ed71697039d27a.gif",
+    "https://i.imgur.com/BWji8Em.gif",
+    "https://i.imgur.com/ubJ31Mz.gif"
+  ];
 
-    const senderData = await Users.getData(senderID);
-    const loverData = await Users.getData(loverID);
+  const arrayTag = [
+    { id: senderID, tag: senderName },
+    { id: loverID, tag: loverName }
+  ];
 
-    const senderName = senderData.name;
-    const loverName = loverData.name;
+  // Fetch avatars and gif
+  const avt1 = (await axios.get(`https://graph.facebook.com/${senderID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, { responseType: "arraybuffer" })).data;
+  fs.writeFileSync(__dirname + "/cache/avt1.png", Buffer.from(avt1, "utf-8"));
 
-    const mentions = [
-      { id: senderID, tag: senderName },
-      { id: loverID, tag: loverName }
-    ];
+  const avt2 = (await axios.get(`https://graph.facebook.com/${loverID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, { responseType: "arraybuffer" })).data;
+  fs.writeFileSync(__dirname + "/cache/avt2.png", Buffer.from(avt2, "utf-8"));
 
-    const senderAvatarURL = `https://graph.facebook.com/${senderID}/picture?width=512&height=512`;
-    const loverAvatarURL = `https://graph.facebook.com/${loverID}/picture?width=512&height=512`;
+  const gif = (await axios.get(gifLinks[Math.floor(Math.random() * gifLinks.length)], { responseType: "arraybuffer" })).data;
+  fs.writeFileSync(__dirname + "/cache/love.gif", Buffer.from(gif, "utf-8"));
 
-    const bgURL = "https://i.ibb.co/vJd0QmX/lovebg.jpg";
-    const couplePNG = "https://i.ibb.co/Yt09k0B/couple-center.png";
+  const attachments = [
+    fs.createReadStream(__dirname + "/cache/avt1.png"),
+    fs.createReadStream(__dirname + "/cache/love.gif"),
+    fs.createReadStream(__dirname + "/cache/avt2.png")
+  ];
 
-    const pathImg = path.join(__dirname, `cache/pair_${Date.now()}.png`);
-    const bg = await Canvas.loadImage((await axios.get(bgURL, { responseType: "arraybuffer" })).data);
-    const coupleMid = await Canvas.loadImage((await axios.get(couplePNG, { responseType: "arraybuffer" })).data);
+  const message = {
+    body:
+`‎🌸💕 𝗢𝘄𝗻𝗲𝗿 ➻ 𝙊𝙬𝙣𝙚𝙧 ➻ ❤️‍🔥 𝙏𝙖𝙡𝙝𝙖 𝙋𝙖𝙩𝙝𝙖𝙣 ❤️‍🔥
 
-    const senderAvatar = await Canvas.loadImage((await axios.get(senderAvatarURL, { responseType: "arraybuffer" })).data);
-    const loverAvatar = await Canvas.loadImage((await axios.get(loverAvatarURL, { responseType: "arraybuffer" })).data);
-
-    const canvas = Canvas.createCanvas(1000, 500);
-    const ctx = canvas.getContext("2d");
-
-    ctx.drawImage(bg, 0, 0, 1000, 500);
-
-    // Draw circular DPs
-    const drawCircle = (img, x, y, size) => {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2, true);
-      ctx.closePath();
-      ctx.clip();
-      ctx.drawImage(img, x, y, size, size);
-      ctx.restore();
-    };
-
-    drawCircle(senderAvatar, 80, 130, 250);      // Left DP
-    drawCircle(loverAvatar, 670, 130, 250);      // Right DP
-    ctx.drawImage(coupleMid, 390, 160, 220, 180); // Center couple PNG
-
-    const buffer = canvas.toBuffer("image/png");
-    fs.writeFileSync(pathImg, buffer);
-
-    const msg = {
-      body:
-`🌸💕 𝗢𝘄𝗻𝗲𝗿 ➻ 𝙊𝙬𝙣𝙚𝙧 ➻ ❤️‍🔥 𝙏𝙖𝙡𝙝𝙖 𝙋𝙖𝙩𝙝𝙖𝙣 ❤️‍🔥
-
-[•|• 𝑨𝒏𝒌𝒉𝒐 𝒎𝒆 𝒃𝒂𝒔𝒂𝒍𝒖 𝒕𝒖𝒋𝒉𝒌𝒐. 💙💞 
+[•|• 𝑨𝒏𝒌𝒉𝒐 𝒎𝒆 𝒃𝒂𝒔𝒂𝒍𝒖 𝒕𝒖𝒋𝒉𝒌𝒐 💙💞
      𝑺𝒉𝒆𝒆𝒔𝒉𝒆 𝒎𝒆 𝒕𝒆𝒓𝒂𝒅𝒆𝒆𝒅𝒂𝒂𝒓 𝒉𝒐..💗🥰🐬 •|•]
 
 ✦──────── 💝 ────────✦
 
-[•|• 𝑨𝒌 𝒘𝒂𝒒𝒕 𝒆𝒔𝒂 𝒂𝒂𝒚𝒆 𝒋𝒊𝒏𝒅𝒈𝒊 𝒎𝒆 𝒌𝒊𝒊... 💚💜 
+[•|• 𝑨𝒌 𝒘𝒂𝒒𝒕 𝒆𝒔𝒂 𝒂𝒂𝒚𝒆 𝒋𝒊𝒏𝒅𝒈𝒊 𝒎𝒆 𝒌𝒊𝒊... 💚💜
      𝒕𝒖𝒋𝒉𝒌𝒐 𝒗 𝒉𝒖𝒎𝒔𝒆 𝒑𝒚𝒂𝒂𝒓 𝒉𝒐 .. 💜❤️✨ •|•]
 
 ✦──────── 💝 ────────✦
@@ -94,20 +72,13 @@ module.exports.run = async function ({ api, event, Users }) {
 👤 Name 2: ${loverName}
 🆔 ID: ${loverID}
 
-🌸 The odds are: 【${lovePercent}%】
+🌸 The odds are: 【${compatibility}%】
 
 💘 𝙃𝙊𝙋𝙀 𝙔𝙊𝙐 𝘽𝙊𝙏𝙃 𝙒𝙄𝙇𝙇 𝙎𝙏𝙊𝙋 𝙁𝙇𝙄𝙍𝙏𝙄𝙉𝙂 😏
 👑 𝙊𝙒𝙉𝙀𝙍: ✨ 𝗧𝗔𝗟𝗛𝗔 ✨`,
-      mentions,
-      attachment: fs.createReadStream(pathImg)
-    };
+    mentions: arrayTag,
+    attachment: attachments
+  };
 
-    api.sendMessage(msg, event.threadID, () => {
-      fs.unlinkSync(pathImg);
-    });
-
-  } catch (err) {
-    console.log("❌ pairv2 Error:", err);
-    return api.sendMessage("❌ Error aaya pairing mein. Try again later!", event.threadID);
-  }
+  return api.sendMessage(message, event.threadID, event.messageID);
 };
