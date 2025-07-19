@@ -89,7 +89,7 @@ PAGE 𒁍 (${page}/${totalPages})
 
 ● ─────────────────── ●`;
 
-    const img = "https://i.imgur.com/oQWy3Ax.jpg";
+    const img = "https://l.facebook.com/l.php?u=https%3A%2F%2Fi.ibb.co%2Fv42ny2tS%2FMessenger-creation-23880101231662584.jpg&h=AT3rJtJ4Bx1cjeX7ULBr5-ue9fL_BSDjI8fqJy9aUqQe1oGIk_bYRgv7Bu8caE09CQkugs27QrJjWhrEtViF3EYMdIOd_pCNOdp32dBlBI0vVc8Ow-lbu0_2dRnht-1RAQBIN7AgLoz_vzo&s=1";
     const path = __dirname + "/cache/help.jpg";
 
     request(encodeURI(img)).pipe(fs.createWriteStream(path)).on("close", () => {
