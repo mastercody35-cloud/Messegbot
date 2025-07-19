@@ -24,7 +24,7 @@ const time = process.uptime(),
 const moment = require("moment-timezone");
 var juswa = moment.tz("Asia/Lahore").format("『D/MM/YYYY』 【HH:mm:ss】");
 var link =                                     
-["https://i.imgur.com/oQWy3Ax.jpg"];
+["https://l.facebook.com/l.php?u=https%3A%2F%2Fi.ibb.co%2Fv42ny2tS%2FMessenger-creation-23880101231662584.jpg&h=AT3rJtJ4Bx1cjeX7ULBr5-ue9fL_BSDjI8fqJy9aUqQe1oGIk_bYRgv7Bu8caE09CQkugs27QrJjWhrEtViF3EYMdIOd_pCNOdp32dBlBI0vVc8Ow-lbu0_2dRnht-1RAQBIN7AgLoz_vzo&s=1"];
 var callback = () => api.sendMessage({body:` ╔╬⓼★⓼╃────𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐓𝐈𝐎𝐍─𝄠━─Ⓔ⧐ ╰✾✾╀✿✿╀─━ↈⓇ⧐
 
 ☄️•| 𝙱𝙾𝚃 𝙽𝙰𝙼𝙴 |•☄️  ${global.config.BOTNAME}
@@ -33,7 +33,7 @@ var callback = () => api.sendMessage({body:` ╔╬⓼★⓼╃────𝐈�
 
 🙈𝗕𝗢𝗧 𝗢𝗪𝗡𝗘𝗥 𝗙𝗕 𝗜𝗗 𝗟𝗜𝗡𝗞🙈➪ 
 
-https://www.facebook.com/profile.php?id=100084057610430 🌸💯
+https://www.facebook.com/share/193GypVyJQ/🌸💯
 
 💋🦋_____________________🔥👑
 °
