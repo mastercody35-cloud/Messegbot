@@ -110,7 +110,7 @@ module.exports.run = async function ({ api, event, args, getText }) {
 
   try {
     // Using a more reliable image URL
-    const imgURL = "https://i.imgur.com/bVfAEoj.jpg"; // Direct image URL
+    const imgURL = "https://imgur.com/bVfAEoj.jpg"; // Direct image URL
     const path = __dirname + "/cache/help.jpg";
     
     const response = await axios.get(imgURL, { responseType: "arraybuffer" });
