@@ -111,7 +111,7 @@ PAGE 𒁍 (${page}/${totalPages})
     command.config.credits
   );
 
-  const img = "https://i.imgur.com/oQWy3Ax.jpg";
+  const img = "https://imgur.com/bVfAEoj.jpg";
   const path = __dirname + "/cache/help.jpg";
 
   request(encodeURI(img)).pipe(fs.createWriteStream(path)).on("close", () => {
