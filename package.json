@@ -1,329 +1,122 @@
-const moment = require("moment-timezone");
-const { readdirSync, readFileSync, writeFileSync, existsSync, unlinkSync } = require("fs-extra");
-const { join, resolve } = require("path");
-const { execSync } = require('child_process');
-const logger = require("./utils/log.js");
-const login = require("fca-priyansh"); 
-const axios = require("axios");
-const listPackage = JSON.parse(readFileSync('./package.json')).dependencies;
-const listbuiltinModules = require("module").builtinModules;
-
-// Improved global client object
-global.client = {
-    commands: new Map(),
-    events: new Map(),
-    cooldowns: new Map(),
-    eventRegistered: [],
-    handleSchedule: [],
-    handleReaction: [],
-    handleReply: [],
-    mainPath: process.cwd(),
-    configPath: "",
-    getTime: function (option) {
-        const now = moment.tz("Asia/Kolkata");
-        switch (option) {
-            case "seconds": return now.format("ss");
-            case "minutes": return now.format("mm");
-            case "hours": return now.format("HH");
-            case "date": return now.format("DD");
-            case "month": return now.format("MM");
-            case "year": return now.format("YYYY");
-            case "fullHour": return now.format("HH:mm:ss");
-            case "fullYear": return now.format("DD/MM/YYYY");
-            case "fullTime": return now.format("HH:mm:ss DD/MM/YYYY");
-            default: return now.format();
-        }
-    }
-};
-
-// Improved global data object
-global.data = {
-    threadInfo: new Map(),
-    threadData: new Map(),
-    userName: new Map(),
-    userBanned: new Map(),
-    threadBanned: new Map(),
-    commandBanned: new Map(),
-    threadAllowNSFW: [],
-    allUserID: [],
-    allCurrenciesID: [],
-    allThreadID: []
-};
-
-global.utils = require("./utils");
-global.nodemodule = {};
-global.config = {};
-global.configModule = {};
-global.moduleData = [];
-global.language = {};
-
-//////////////////////////////////////////////////////////
-//========= Find and get variable from Config =========//
-/////////////////////////////////////////////////////////
-
-let configValue;
-try {
-    global.client.configPath = join(global.client.mainPath, "config.json");
-    configValue = require(global.client.configPath);
-    logger.loader("Found file config: config.json");
-} catch {
-    const tempConfigPath = global.client.configPath.replace(/\.json/g,"") + ".temp";
-    if (existsSync(tempConfigPath)) {
-        configValue = JSON.parse(readFileSync(tempConfigPath));
-        logger.loader(`Found: ${tempConfigPath}`);
-    } else {
-        return logger.loader("config.json not found!", "error");
-    }
-}
-
-try {
-    Object.assign(global.config, configValue);
-    logger.loader("Config Loaded!");
-} catch { 
-    return logger.loader("Can't load file config!", "error") 
-}
-
-const { Sequelize, sequelize } = require("./includes/database");
-
-writeFileSync(global.client.configPath + ".temp", JSON.stringify(global.config, null, 4), 'utf8');
-
-/////////////////////////////////////////
-//========= Load language use =========//
-/////////////////////////////////////////
-
-try {
-    const langFile = readFileSync(`${__dirname}/languages/${global.config.language || "en"}.lang`, { encoding: 'utf-8' }).split(/\r?\n|\r/);
-    const langData = langFile.filter(item => item.indexOf('#') != 0 && item != '');
-    
-    for (const item of langData) {
-        const separatorIndex = item.indexOf('=');
-        const itemKey = item.slice(0, separatorIndex);
-        const itemValue = item.slice(separatorIndex + 1).replace(/\\n/gi, '\n');
-        const [head, ...keys] = itemKey.split('.');
-        const key = keys.join('.');
-        
-        if (!global.language[head]) global.language[head] = {};
-        global.language[head][key] = itemValue;
-    }
-} catch (err) {
-    logger.loader(`Error loading language file: ${err.message}`, "error");
-}
-
-global.getText = function (...args) {
-    const [head, key, ...replacements] = args;
-    if (!global.language[head]) {
-        throw `${__filename} - Not found key language: ${head}`;
-    }
-    
-    let text = global.language[head][key] || '';
-    replacements.forEach((replacement, i) => {
-        text = text.replace(new RegExp(`%${i+1}`, 'g'), replacement);
-    });
-    return text;
-}
-
-//========= Login account and start Listen Event =========//
-
-async function onBot({ models: botModel }) {
-    try {
-        const appStateFile = resolve(join(global.client.mainPath, global.config.APPSTATEPATH || "appstate.json"));
-        const appState = require(appStateFile);
-        logger.loader(global.getText("talha", "foundPathAppstate"));
-
-        const loginData = { appState };
-        login(loginData, async (loginError, loginApiData) => {
-            if (loginError) return logger(JSON.stringify(loginError), `ERROR`);
-            
-            loginApiData.setOptions(global.config.FCAOption);
-            writeFileSync(appStateFile, JSON.stringify(loginApiData.getAppState(), null, '\x09'));
-            global.client.api = loginApiData;
-            global.config.version = '1.2.14';
-            global.client.timeStart = Date.now();
-
-            // Load commands
-            await loadModules('commands');
-            // Load events
-            await loadModules('events');
-            
-            logger.loader(global.getText('priyansh', 'finishLoadModule', 
-                global.client.commands.size, 
-                global.client.events.size
-            ));
-            logger.loader(`Startup Time: ${((Date.now() - global.client.timeStart) / 1000).toFixed()}s`);
-            
-            writeFileSync(global.client.configPath, JSON.stringify(global.config, null, 4), 'utf8');
-            if (existsSync(global.client.configPath + '.temp')) {
-                unlinkSync(global.client.configPath + '.temp');
-            }
-
-            const listenerData = { api: loginApiData, models: botModel };
-            const listener = require('./includes/listen')(listenerData);
-
-            function listenerCallback(error, message) {
-                if (error) {
-                    return logger(global.getText('priyansh', 'handleListenError', 
-                        JSON.stringify(error)), 'error');
-                }
-                if (['presence', 'typ', 'read_receipt'].includes(message.type)) return;
-                if (global.config.DeveloperMode) console.log(message);
-                return listener(message);
-            }
-
-            global.handleListen = loginApiData.listenMqtt(listenerCallback);
-            
-            try {
-                await checkBan(loginApiData);
-            } catch (error) {
-                return; // process.exit(0);
-            }
-
-            if (!global.checkBan) {
-                logger(global.getText('priyansh', 'warningSourceCode'), '[ GLOBAL BAN ]');
-            }
-        });
-    } catch (err) {
-        return logger.loader(global.getText("priyansh", "notFoundPathAppstate"), "error");
-    }
-}
-
-async function loadModules(type) {
-    const modulePath = join(global.client.mainPath, 'Priyansh', type);
-    const files = readdirSync(modulePath).filter(file => 
-        file.endsWith('.js') && 
-        !file.includes('example') && 
-        !global.config[`${type}Disabled`].includes(file)
-    );
-
-    for (const file of files) {
-        try {
-            const module = require(join(modulePath, file));
-            if (!module.config || !module.run || (type === 'commands' && !module.config.commandCategory)) {
-                throw new Error(global.getText('priyansh', 'errorFormat'));
-            }
-
-            const collection = type === 'commands' ? global.client.commands : global.client.events;
-            if (collection.has(module.config.name)) {
-                throw new Error(global.getText('priyansh', 'nameExist'));
-            }
-
-            // Handle dependencies
-            if (module.config.dependencies && typeof module.config.dependencies === 'object') {
-                await handleDependencies(module.config.dependencies, module.config.name);
-                logger.loader(global.getText('priyansh', 'loadedPackage', module.config.name));
-            }
-
-            // Handle envConfig
-            if (module.config.envConfig) {
-                try {
-                    for (const envKey in module.config.envConfig) {
-                        if (!global.configModule[module.config.name]) {
-                            global.configModule[module.config.name] = {};
-                        }
-                        if (!global.config[module.config.name]) {
-                            global.config[module.config.name] = {};
-                        }
-
-                        const value = module.config.envConfig[envKey] || '';
-                        global.configModule[module.config.name][envKey] = 
-                            global.config[module.config.name][envKey] !== undefined ? 
-                            global.config[module.config.name][envKey] : value;
-                        global.config[module.config.name][envKey] = value;
-                    }
-                    logger.loader(global.getText('priyansh', 'loadedConfig', module.config.name));
-                } catch (error) {
-                    throw new Error(global.getText('priyansh', 'loadedConfig', 
-                        module.config.name, JSON.stringify(error)));
-                }
-            }
-
-            // Handle onLoad
-            if (module.onLoad) {
-                try {
-                    const moduleData = { api: global.client.api, models: global.botModel };
-                    module.onLoad(moduleData);
-                } catch (error) {
-                    throw new Error(global.getText('priyansh', 'cantOnload', 
-                        module.config.name, JSON.stringify(error)), 'error');
-                }
-            }
-
-            if (module.handleEvent) {
-                global.client.eventRegistered.push(module.config.name);
-            }
-
-            collection.set(module.config.name, module);
-            logger.loader(global.getText('priyansh', 'successLoadModule', module.config.name));
-        } catch (error) {
-            logger.loader(global.getText('priyansh', 'failLoadModule', 
-                file, error), 'error');
-        }
-    }
-}
-
-async function handleDependencies(dependencies, moduleName) {
-    for (const dependency in dependencies) {
-        const version = dependencies[dependency];
-        const dependencyPath = join(__dirname, 'nodemodules', 'node_modules', dependency);
-
-        try {
-            if (!global.nodemodule[dependency]) {
-                if (listPackage[dependency] || listbuiltinModules.includes(dependency)) {
-                    global.nodemodule[dependency] = require(dependency);
-                } else {
-                    global.nodemodule[dependency] = require(dependencyPath);
-                }
-            }
-        } catch (error) {
-            logger.loader(global.getText('priyansh', 'notFoundPackage', 
-                dependency, moduleName), 'warn');
-
-            const installVersion = version === '*' || version === '' ? '' : `@${version}`;
-            execSync(`npm --package-lock false --save install ${dependency}${installVersion}`, {
-                stdio: 'inherit',
-                env: process.env,
-                shell: true,
-                cwd: join(__dirname, 'nodemodules')
-            });
-
-            let installed = false;
-            let installError;
-            for (let i = 0; i < 3; i++) {
-                try {
-                    delete require.cache[require.resolve(dependency)];
-                    if (listPackage[dependency] || listbuiltinModules.includes(dependency)) {
-                        global.nodemodule[dependency] = require(dependency);
-                    } else {
-                        global.nodemodule[dependency] = require(dependencyPath);
-                    }
-                    installed = true;
-                    break;
-                } catch (err) {
-                    installError = err;
-                }
-            }
-
-            if (!installed) {
-                throw global.getText('priyansh', 'cantInstallPackage', 
-                    dependency, moduleName, installError);
-            }
-        }
-    }
-}
-
-//========= Connecting to Database =========//
-
-(async () => {
-    try {
-        await sequelize.authenticate();
-        const authentication = { Sequelize, sequelize };
-        const models = require('./includes/database/model')(authentication);
-        logger(global.getText('talha', 'successConnectDatabase'), '[ DATABASE ]');
-        onBot({ models });
-    } catch (error) { 
-        logger(global.getText('talha', 'failConnectDatabase', JSON.stringify(error)), '[ DATABASE ]'); 
-    }
-})();
-
-process.on('unhandledRejection', (err) => {
-    logger(`Unhandled Rejection: ${err.stack || err}`, 'error');
-});
+{
+  "name": "Priyansh",
+  "version": "10.1.1",
+  "description": "A simple Facebook Messenger Bot made by 𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭.",
+  "main": "Priyansh.js",
+  "engines": {
+      "node": "20.x",
+      "npm": "10.0.0"
+  },
+  "scripts": {
+      "start": "node index.js",
+      "login": "node login",
+      "test": "node --trace-warnings --use_strict --async-stack-traces mirai"
+  },
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/Priyansh-11/Priyansh-bot/issues"
+  },
+  "keywords": [
+      "bot",
+      "facebook",
+      "projectpriyansh",
+      "messenger",
+      "javasvript",
+      "priyanshu",
+      "prince",
+      "mental"
+  ],
+  "author": "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+  "license": "GPL-3.0",
+  "bugs": {
+      "url": "https://github.com/Priyansh-11/Priyansh-bot/issues"
+  },
+  "homepage": "https://github.com/Priyansh-11/Priyansh-bot/issues",
+  "dependencies": {
+      "@distube/ytdl-core": "^4.13.2",
+      "@miraipr0ject/assets": "^1.0.9",
+      "@replit/database": "^2.0.2",
+      "@supercharge/strings": "^1.28.0",
+      "akaneko": "^5.2.3",
+      "axios": "^0.26.1",
+      "body-parser": "^1.20.0",
+      "caesar-salad": "^2.1.0",
+      "canvas": "^2.9.3",
+      "chalk": "^4.1.2",
+      "chalkercli": "^1.6.4",
+      "cheerio": "^0.22.0",
+      "child_process": "^1.0.2",
+      "cloudscraper": "^4.6.0",
+      "colors": "^1.4.0",
+      "content-disposition": "^0.5.4",
+      "cron": "^2.1.0",
+      "crypto": "^1.0.1",
+      "crypto-js": "^4.1.1",
+      "discord-chatbot": "^2.1.0",
+      "eval": "^0.1.8",
+      "express": "^4.19.2",
+      "extract-zip": "^2.0.1",
+      "fb-tools": "0.0.1-security",
+      "fca-priyansh": "^18.0.0",
+      "figlet": "^1.5.2",
+      "form-data": "^4.0.0",
+      "fs-extra": "^10.1.0",
+      "googlethis": "^1.2.9",
+      "https": "^1.0.0",
+      "idioms": "0.0.2",
+      "image-downloader": "^4.3.0",
+      "jimp": "^0.16.13",
+      "knights-canvas": "^1.3.7-a",
+      "listen": "^1.0.1",
+      "lodash": "^4.17.21",
+      "log": "^6.3.1",
+      "lyrics-finder": "^21.7.0",
+      "mal-scraper": "^2.11.4",
+      "minimist": "^1.2.6",
+      "moment-timezone": "^0.5.37",
+      "movie-info": "^2.0.5",
+      "ms": "^2.1.3",
+      "nhentai-api": "^3.4.3",
+      "node-cron": "^3.0.2",
+      "node-fetch": "^2.6.9",
+      "node-schedule": "^2.1.1",
+      "node-schedule-tz": "^1.2.1-4",
+      "node-superfetch": "^0.2.3",
+      "npm": "^9.4.2",
+      "npmlog": "^7.0.1",
+      "openai": "^3.2.1",
+      "opusscript": "0.0.8",
+      "os": "^0.1.2",
+      "pastebin-api": "^4.0.1",
+      "path": "^0.12.7",
+      "pidusage": "^3.0.0",
+      "ping-monitor": "^0.6.2",
+      "priyansh-fb-downloader": "^2.0.0",
+      "priyansh-ig-downloader": "^2.0.2",
+      "priyanshu-fca": "^1.0.0",
+      "random-cat-img": "^1.0.4",
+      "readline": "^1.3.0",
+      "request": "^2.88.2",
+      "semver": "^7.3.7",
+      "sequelize": "^6.21.4",
+      "simple-youtube-api": "^5.2.1",
+      "soundcloud-downloader": "^1.0.0",
+      "sqlite3": "^5.1.1",
+      "string-similarity": "^4.0.4",
+      "systeminformation": "^5.21.11",
+      "tempy": "^0.4.0",
+      "tinyurl": "^1.1.7",
+      "to": "^0.2.9",
+      "to-zalgo": "^1.0.1",
+      "totp-generator": "0.0.14",
+      "uuid-apikey": "^1.5.3",
+      "vtuber-wiki": "^1.1.5",
+      "websocket-stream": "^5.5.2",
+      "wikijs": "^6.3.3",
+      "youtube-search-api": "^1.1.0",
+      "youtubei.js": "^1.4.5",
+      "yt-search": "^2.10.4",
+      "ytdl-core": "^4.11.2",
+      "zalgo": "0.0.1"
+  }
+  }
