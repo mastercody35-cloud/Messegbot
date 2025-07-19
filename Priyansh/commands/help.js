@@ -1,15 +1,15 @@
 module.exports.config = {
   name: "help",
-  version: "1.2.0",
+  version: "1.3.0",
   hasPermssion: 0,
   credits: "Talha ✨",
-  description: "Stylish commands list with images",
+  description: "Stylish commands list with Imgur images",
   commandCategory: "system",
   usages: "help [command | page]",
   cooldowns: 5,
   envConfig: {
-    autoUnsend: false,
-    delayUnsend: 300
+    autoUnsend: true,
+    delayUnsend: 60
   }
 };
 
@@ -19,40 +19,9 @@ module.exports.languages = {
     "user": "User",
     "adminGroup": "Group Admin",
     "adminBot": "Bot Admin",
-    "helpHeader": "𝐎𝐰𝐧𝐞𝐫 ➻ 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧\n\n",
-    "helpFooter": "\n● ──────────────────── ●\n\n𝐌𝐘 𝐎𝐰𝐧𝐞𝐑 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧 .... < 𝐄𝐃𝐈𝐓 >\n𝐘𝐞 𝐁𝐨𝐓 𝐒𝐢𝐫𝐟 𝐎𝐰𝐧𝐞𝐑 𝐊 𝐋𝐢𝐲𝐞 𝐇\n𝐌𝐮𝐣𝐡𝐞 𝐀𝐚𝐩 𝐋𝐨𝐠𝐨 𝐊𝐨 𝐇𝐚𝐬𝐚𝐧𝐞 𝐊 𝐋𝐢𝐲𝐞 𝐁𝐚𝐧𝐚𝐲𝐚 𝐆𝐲𝐚 𝐇\n𝐓𝐨𝐡 𝐇𝐚𝐩𝐩𝐲 𝐑𝐞𝐡𝐚𝐧𝐚\n𝐀𝐩𝐤𝐚 𝐀𝐩𝐧𝐚 𝐎𝐰𝐧𝐞𝐑 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧\n\n● ─────────────────── ●"
-  }
-};
-
-module.exports.handleEvent = async function ({ api, event, getText }) {
-  const { commands } = global.client;
-  const { threadID, messageID, body } = event;
-
-  if (!body || !body.toLowerCase().startsWith("help")) return;
-  
-  const args = body.split(" ").slice(1);
-  if (args.length === 0 || !commands.has(args[0].toLowerCase())) return;
-  
-  const command = commands.get(args[0].toLowerCase());
-  const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
-  const prefix = threadSetting.PREFIX || global.config.PREFIX;
-
-  const infoText = getText(
-    "moduleInfo",
-    command.config.name,
-    command.config.description,
-    `${prefix}${command.config.name} ${command.config.usages || ""}`,
-    command.config.commandCategory,
-    command.config.cooldowns,
-    command.config.hasPermssion == 0 ? getText("user") : 
-      (command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot")),
-    command.config.credits
-  );
-
-  try {
-    await api.sendMessage(infoText, threadID, messageID);
-  } catch (error) {
-    console.error("Error sending help info:", error);
+    "helpHeader": "╔═════≪ •❈• ≫═════╗\n       𝐓𝐀𝐋𝐇𝐀 𝐁𝐎𝐓 𝐇𝐄𝐋𝐏 𝐌𝐄𝐍𝐔\n╚═════≪ •❈• ≫═════╝\n\n",
+    "helpFooter": "\n\n╔═════≪ •❈• ≫═════╗\n  𝐎𝐖𝐍𝐄𝐑 ➤ 𝐓𝐀𝐋𝐇𝐀 𝐏𝐀𝐓𝐇𝐀𝐍\n╚═════≪ •❈• ≫═════╝",
+    "pageInfo": "📑 𝐏𝐚𝐠𝐞 %1/%2\n\n🔍 𝐓𝐲𝐩𝐞: »help [cmd]« 𝐟𝐨𝐫 𝐝𝐞𝐭𝐚𝐢𝐥𝐬\n🌟 𝐀𝐥𝐥 𝐜𝐦𝐝𝐬: »help all«"
   }
 };
 
@@ -61,70 +30,72 @@ module.exports.run = async function ({ api, event, args, getText }) {
   const fs = require("fs-extra");
   const { commands } = global.client;
   const { threadID, messageID } = event;
-  const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
-  const prefix = threadSetting.PREFIX || global.config.PREFIX;
+  const prefix = global.config.PREFIX;
 
-  // Check if specific command help is requested
-  if (args[0]) {
+  // Handle specific command help
+  if (args[0] && commands.has(args[0].toLowerCase())) {
     const command = commands.get(args[0].toLowerCase());
-    if (command) {
-      const infoText = getText(
-        "moduleInfo",
-        command.config.name,
-        command.config.description,
-        `${prefix}${command.config.name} ${command.config.usages || ""}`,
-        command.config.commandCategory,
-        command.config.cooldowns,
-        command.config.hasPermssion == 0 ? getText("user") : 
-          (command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot")),
-        command.config.credits
-      );
-      
-      return api.sendMessage(infoText, threadID, messageID);
-    }
+    const infoText = getText(
+      "moduleInfo",
+      command.config.name,
+      command.config.description,
+      `${prefix}${command.config.name} ${command.config.usages || ""}`,
+      command.config.commandCategory,
+      command.config.cooldowns,
+      command.config.hasPermssion == 0 ? getText("user") : 
+        (command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot")),
+      command.config.credits
+    );
+    
+    return api.sendMessage(infoText, threadID, messageID);
   }
 
-  // Show command list
+  // Handle command list
   const page = parseInt(args[0]) || 1;
   const perPage = 10;
   const commandList = Array.from(commands.keys()).sort();
   const totalPages = Math.ceil(commandList.length / perPage);
   
   if (page < 1 || page > totalPages) {
-    return api.sendMessage(`Invalid page number. Please choose between 1 and ${totalPages}.`, threadID, messageID);
+    return api.sendMessage(`Invalid page. Available pages: 1-${totalPages}`, threadID, messageID);
   }
 
   const startIdx = (page - 1) * perPage;
   const pageCommands = commandList.slice(startIdx, startIdx + perPage);
   
   let list = pageCommands.map((cmd, i) => {
-    return `😈  「 ${startIdx + i + 1} 」${prefix}${cmd}`;
+    return `✨ ${startIdx + i + 1}. ${prefix}${cmd}`;
   }).join("\n");
 
   const body = getText("helpHeader") + 
-    list +
-    `\n\nPAGE 𒁍 (${page}/${totalPages})\n\n` +
-    `𝗖𝗼𝗺𝗺𝗮𝗻𝗱 𝗗𝗲𝘁𝗮𝗶𝗹 ➠ ${prefix}help [command]\n` +
-    `𝗔𝗹𝗹 𝗖𝗺𝗱𝘀 ➠ ${prefix}help all\n` +
+    list + "\n\n" +
+    getText("pageInfo", page, totalPages) +
     getText("helpFooter");
 
   try {
-    // Using a more reliable image URL
-    const imgURL = "https://imgur.com/bVfAEoj.jpg"; // Direct image URL
+    // Using direct Imgur URL (replace with your own image)
+    const imgURL = "https://i.imgur.com/3ZQZQ9M.jpg"; // Your Imgur image direct link
+    
+    // Download image
     const path = __dirname + "/cache/help.jpg";
+    const response = await axios.get(imgURL, { 
+      responseType: "arraybuffer",
+      headers: {
+        "Referer": "https://imgur.com/"
+      }
+    });
     
-    const response = await axios.get(imgURL, { responseType: "arraybuffer" });
-    await fs.writeFile(path, Buffer.from(response.data, "binary"));
+    await fs.writeFile(path, response.data);
     
+    // Send message with image
     await api.sendMessage({
       body: body,
       attachment: fs.createReadStream(path)
-    }, threadID);
+    }, threadID, () => fs.unlinkSync(path), messageID);
     
-    fs.unlinkSync(path);
   } catch (error) {
-    console.error("Error sending help image:", error);
-    // Fallback to text-only if image fails
+    console.error("Error sending help:", error);
+    // Fallback to text if image fails
     await api.sendMessage(body, threadID, messageID);
   }
 };
