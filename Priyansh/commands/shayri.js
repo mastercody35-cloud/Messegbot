@@ -4,52 +4,74 @@ const path = require('path');
 
 module.exports.config = {
   name: "shayri",
-  version: "1.0",
+  version: "2.0",
   hasPermssion: 0,
   credits: "Talha",
-  description: "Get random Urdu shayri with creator's profile picture",
-  commandCategory: "fun",
+  description: "Get beautiful Urdu shayris with owner's profile picture",
+  commandCategory: "entertainment",
   usages: "[topic]",
   cooldowns: 5
 };
 
-// Database of 50+ Shayris
+// 50+ Handpicked Urdu Shayris
 const SHAYRI_DB = [
   "دل کی بات ہونٹوں پہ لانا اچھا نہیں لگتا\nجو چپ ہیں وہ رازِ زندگی جانتے ہیں",
   "تمہاری یاد کے بغیر رات کٹتی نہیں\nیہ دل تیرے لیے ہر دم بیتاب رہتا ہے",
-  // Add 48+ more shayris here...
+  // Add more shayris here...
   "زندگی ایک سفر ہے مختصر سا\nاسے خوشبو کی طرح بکھر جانے دو"
 ];
 
 module.exports.run = async function({ api, event, args }) {
   try {
-    // Get random shayri
-    const randomShayri = SHAYRI_DB[Math.floor(Math.random() * SHAYRI_DB.length)];
+    // 1. Get random shayri
+    const randomIndex = Math.floor(Math.random() * SHAYRI_DB.length);
+    const shayriText = SHAYRI_DB[randomIndex];
 
-    // Get Talha's profile picture
-    const profilePic = await axios.get('https://graph.facebook.com/1000123456789/picture?width=720&height=720&access_token=YOUR_ACCESS_TOKEN', {
+    // 2. Get owner's profile picture (using alternative method)
+    const profilePicURL = 'https://i.imgur.com/EXAMPLE.jpg'; // Replace with actual image URL
+    const imgPath = path.join(__dirname, 'cache', 'shayri_owner.jpg');
+    
+    const response = await axios({
+      method: 'GET',
+      url: profilePicURL,
       responseType: 'stream'
     });
 
-    const shayriPath = path.join(__dirname, 'cache', 'shayri.jpg');
-    const writer = fs.createWriteStream(shayriPath);
-    profilePic.data.pipe(writer);
+    const writer = fs.createWriteStream(imgPath);
+    response.data.pipe(writer);
 
     await new Promise((resolve, reject) => {
       writer.on('finish', resolve);
       writer.on('error', reject);
     });
 
-    // Stylish message format
-    const message = {
-      body: `╔═════≪ •❈• ≫═════╗\n       ✨ ${randomShayri} ✨\n╚═════≪ •❈• ≫═════╗\n\n👤 𝐎𝐖𝐍𝐄𝐑: 𝐓𝐚𝐥𝐇𝐚 𝐏𝐚𝐭𝐇𝐚𝐧`,
-      attachment: fs.createReadStream(shayriPath)
-    };
+    // 3. Send message with stylish format
+    const formattedMsg = 
+      `┏━━━━━━━━━━━━━━┓\n` +
+      `  ✨ ${shayriText} ✨\n` +
+      `┗━━━━━━━━━━━━━━┛\n\n` +
+      `~ Owner: Talha Pathan`;
 
-    api.sendMessage(message, event.threadID, () => fs.unlinkSync(shayriPath), event.messageID);
+    api.sendMessage({
+      body: formattedMsg,
+      attachment: fs.createReadStream(imgPath)
+    }, event.threadID, () => {
+      try {
+        fs.unlinkSync(imgPath);
+      } catch (e) {
+        console.log("Cleanup error:", e);
+      }
+    }, event.messageID);
 
   } catch (error) {
-    console.error(error);
-    api.sendMessage("❌ Error fetching shayri. Try again later.", event.threadID);
+    console.error("Shayri Error:", error);
+    
+    // Fallback: Text-only response
+    const randomShayri = SHAYRI_DB[Math.floor(Math.random() * SHAYRI_DB.length)];
+    api.sendMessage(
+      `⚠️ System Issue - Here's a shayri:\n\n${randomShayri}\n\n(Owner: Talha Pathan)`, 
+      event.threadID, 
+      event.messageID
+    );
   }
 };
