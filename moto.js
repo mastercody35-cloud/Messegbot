@@ -4,49 +4,60 @@ const path = require("path");
 
 module.exports.config = {
   name: "moto",
-  version: "1.0",
+  version: "2.0",
   hasPermssion: 0,
-  credits: "Talha ",
-  description: "Ask AI anything, get voice reply",
+  credits: "Talha",
+  description: "AI assistant with voice reply",
   commandCategory: "AI",
   usages: "[question]",
-  cooldowns: 3
+  cooldowns: 5
 };
 
 module.exports.run = async function ({ api, event, args }) {
   const question = args.join(" ");
-  if (!question) return api.sendMessage("🤖 | Moto kya bole? Sawal to pocho!", event.threadID);
+  if (!question) return api.sendMessage("🤖 Moto kya bole? Kuch to pucho!", event.threadID, event.messageID);
 
   try {
-    // 1. Get AI reply from ChatGPT (or OpenAI API)
-    const chatReply = await axios.post("https://gpt4free.vercel.app/v1/chat/completions", {
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: question }]
-    }, {
-      headers: { "Authorization": "Bearer FREE-TOKEN" } // <-- Replace with your real API key
+    // Step 1: Get AI text response
+    const aiResponse = await axios.get(`https://api.azz.biz.id/api/simsimi?q=${encodeURIComponent(question)}&key=global`);
+    const answer = aiResponse.data?.respon || "Moto samajh nahi paya, phir se try karo";
+
+    // Step 2: Convert text to speech
+    const voiceResponse = await axios.get(`https://api.tts.quest/v3/voicevox/audio?text=${encodeURIComponent(answer)}&speaker=3`, {
+      timeout: 30000
     });
 
-    const answer = chatReply.data.choices[0].message.content;
-    if (!answer) return api.sendMessage("❌ | Moto confused hogya...", event.threadID);
+    if (!voiceResponse.data?.success) {
+      return api.sendMessage({
+        body: `🤖 Moto (text only): ${answer}\n\n⚠ Voice service unavailable right now`
+      }, event.threadID, event.messageID);
+    }
 
-    // 2. Convert reply to voice using free TTS
-    const ttsURL = `https://api.tts.quest/v3/voice?text=${encodeURIComponent(answer)}&lang=en`;
-    const ttsRes = await axios.get(ttsURL);
-    const audioUrl = ttsRes.data?.mp3;
+    // Step 3: Download the audio
+    const audioUrl = voiceResponse.data.mp3StreamingUrl;
+    const filePath = path.join(__dirname, 'cache', 'moto_voice.mp3');
+    
+    const audioFile = await axios.get(audioUrl, {
+      responseType: 'arraybuffer',
+      timeout: 30000
+    });
 
-    if (!audioUrl) return api.sendMessage("❌ | Moto bol nahi paya. Try again.", event.threadID);
+    fs.writeFileSync(filePath, Buffer.from(audioFile.data));
 
-    const filepath = path.join(__dirname, `/cache/moto.mp3`);
-    const audio = await axios.get(audioUrl, { responseType: "arraybuffer" });
-    fs.writeFileSync(filepath, Buffer.from(audio.data, "utf-8"));
-
+    // Step 4: Send the voice message
     return api.sendMessage({
-      body: `🎤 Moto says: ${answer}`,
-      attachment: fs.createReadStream(filepath)
-    }, event.threadID, () => fs.unlinkSync(filepath));
+      body: `🎤 Moto says:\n\n${answer}`,
+      attachment: fs.createReadStream(filePath)
+    }, event.threadID, () => {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (e) {
+        console.log("Error deleting file:", e);
+      }
+    }, event.messageID);
 
-  } catch (err) {
-    console.error("Moto Error:", err.message);
-    return api.sendMessage("❌ | Error aagya Moto me.", event.threadID);
+  } catch (error) {
+    console.error("Moto Error:", error);
+    return api.sendMessage("❌ Moto ko thodi problem ho rahi hai... Thodi der baad try karna", event.threadID, event.messageID);
   }
 };
