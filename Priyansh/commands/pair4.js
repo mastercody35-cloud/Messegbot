@@ -60,16 +60,16 @@ async function makeImage({ one, two }) {
     throw new Error(`Failed to download avatar for user ${two}.`);
   }
 
-  // Process avatars into circles
+  // Process avatars into circles and resize to fit the base image
   let circleOne = await jimp.read(avatarOne);
-  circleOne.circle();
+  circleOne.circle().resize(410, 410);  // Adjusted size to match base image circles
   let circleTwo = await jimp.read(avatarTwo);
-  circleTwo.circle();
+  circleTwo.circle().resize(410, 410);
 
-  // Composite the circular avatars onto the base image
+  // Correct positioning to align with the base image circles
   pairing_img
-    .composite(circleOne.resize(410, 410), 785, 184)
-    .composite(circleTwo.resize(410, 410), 94, 181);
+    .composite(circleOne, 94, 181)   // Left circle position
+    .composite(circleTwo, 785, 184);  // Right circle position
 
   let raw = await pairing_img.getBufferAsync("image/png");
   fs.writeFileSync(pathImg, raw);
