@@ -2,9 +2,9 @@ module.exports.config = {
   name: "pair4",
   version: "1.0.1",
   hasPermssion: 0,
-  credits: "Talha",
-  description: "Pair with people of the opposite gender in the group",
-  commandCategory: "For users",
+  credits: "Fixed by Talha 🛠️",
+  description: "Stylish pairing with romantic background and DPs",
+  commandCategory: "Love",
   cooldowns: 5,
   dependencies: {
     "axios": "",
@@ -24,6 +24,7 @@ async function makeImage({ one, two }) {
 
   const pairingImgUrl = "https://i.ibb.co/bgFhk6Bb/Messenger-creation-2611011159251969.jpg";
   const baseImagePath = path.join(__root, "pairing_temp.png");
+
   try {
     const baseImageBuffer = (await axios.get(pairingImgUrl, { responseType: 'arraybuffer' })).data;
     fs.writeFileSync(baseImagePath, Buffer.from(baseImageBuffer, 'binary'));
@@ -62,9 +63,10 @@ async function makeImage({ one, two }) {
   let circleOne = await jimp.read(await circle(avatarOne));
   let circleTwo = await jimp.read(await circle(avatarTwo));
 
+  // 🧠 Resize & Position Adjusted to match screenshot-style layout
   pairing_img
-    .composite(circleOne.resize(410, 410), 785, 184)
-    .composite(circleTwo.resize(410, 410), 94, 181);
+    .composite(circleOne.resize(320, 320), 115, 330) // Left side
+    .composite(circleTwo.resize(320, 320), 890, 330); // Right side
 
   let raw = await pairing_img.getBufferAsync("image/png");
   fs.writeFileSync(pathImg, raw);
@@ -106,7 +108,6 @@ module.exports.run = async function ({ api, event }) {
     }
 
     const participantsInfo = await api.getUserInfo(participantIDs);
-
     let oppositeGenderIDs = [];
 
     if (senderGender === 2) {
@@ -136,8 +137,7 @@ module.exports.run = async function ({ api, event }) {
 
     return makeImage({ one, two }).then(path =>
       api.sendMessage({
-        body: `🅢𝐔𝐂𝐂𝐄𝐒𝐒𝐅𝐔𝐋 🅟𝐀𝐈𝐑𝐈𝐍𝐆
-𝐇𝐎𝐏𝐄 𝐘𝐎𝐔 𝐁𝐎𝐓𝐇 𝐖𝐈𝐋𝐋 𝐒𝐓𝐎𝐏 𝐅𝐋𝐈𝐑𝐓𝐈𝐍𝐆 ⊂◉‿◉\n━━━━━━━━━━━━━━━━━━ ${namee} 💓 ${name}\n━━━━━━━━━━━━━━━━━━\n➥ 𝐃𝐎𝐔𝐁𝐋𝐄 𝐑𝐀𝐓𝐈𝐎: ${tle}%\n━━━━━━━━━━━━━━━━━━\n𝙊𝙬𝙣𝙚𝙧 𝙈𝙞𝙖𝙣 𝘼𝙢𝙞𝙧`,
+        body: `🅢𝐔𝐂𝐂𝐄𝐒𝐒𝐅𝐔𝐋 🅟𝐀𝐈𝐑𝐈𝐍𝐆 💞\n𝐇𝐎𝐏𝐄 𝐘𝐎𝐔 𝐁𝐎𝐓𝐇 𝐖𝐈𝐋𝐋 𝐒𝐓𝐎𝐏 𝐅𝐋𝐈𝐑𝐓𝐈𝐍𝐆 ⊂◉‿◉\n━━━━━━━━━━━━━━━━━━\n${namee} 💓 ${name}\n━━━━━━━━━━━━━━━━━━\n➥ 𝐃𝐎𝐔𝐁𝐋𝐄 𝐑𝐀𝐓𝐈𝐎: ${tle}\n━━━━━━━━━━━━━━━━━━\n⚜️ 𝐎𝐰𝐧𝐞𝐫: 𝐓𝐚𝐥𝐡𝐚 ❤`,
         mentions: arraytag,
         attachment: fs.createReadStream(path)
       }, threadID, () => fs.unlinkSync(path), messageID));
