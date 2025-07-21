@@ -1,16 +1,15 @@
 module.exports.config = {
   name: "pair4",
-  version: "1.0.2",
+  version: "1.0.1",
   hasPermssion: 0,
-  credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭 | Modified by Talha",
-  description: "Create romantic pairs with profile pictures",
-  commandCategory: "Fun",
+  credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+  description: "Pair with people of the opposite gender in the group",
+  commandCategory: "For users",
   cooldowns: 5,
   dependencies: {
     "axios": "",
     "fs-extra": "",
-    "jimp": "",
-    "canvas": ""
+    "jimp": ""
   }
 };
 
@@ -21,52 +20,58 @@ async function makeImage({ one, two }) {
   const jimp = global.nodemodule["jimp"];
   const __root = path.resolve(__dirname, "cache", "canvas");
 
-  // Create canvas folder if it doesn't exist
   if (!fs.existsSync(__root)) fs.mkdirSync(__root, { recursive: true });
 
-  // Download base image (replace with your preferred background)
-  const pairingImgUrl = "https://i.imgur.com/8Zk0wBq.jpg"; // Romantic background
+  const pairingImgUrl = "https%3A%2F%2Fi.ibb.co%2FbgFhk6Bb%2FMessenger-creation-2611011159251969.jpg";
   const baseImagePath = path.join(__root, "pairing_temp.png");
-  const baseImageBuffer = (await axios.get(pairingImgUrl, { responseType: 'arraybuffer' })).data;
-  fs.writeFileSync(baseImagePath, Buffer.from(baseImageBuffer, 'utf-8'));
+  try {
+    const baseImageBuffer = (await axios.get(pairingImgUrl, { responseType: 'arraybuffer' })).data;
+    fs.writeFileSync(baseImagePath, Buffer.from(baseImageBuffer, 'binary'));
+  } catch (error) {
+    console.error("Error downloading base image:", error.message);
+    throw new Error("Failed to download base image.");
+  }
 
   let pairing_img = await jimp.read(baseImagePath);
   let pathImg = path.join(__root, `pairing_${one}_${two}.png`);
   let avatarOne = path.join(__root, `avt_${one}.png`);
   let avatarTwo = path.join(__root, `avt_${two}.png`);
 
-  // Get profile pictures with better error handling
   try {
-    let getAvatarOne = (await axios.get(`https://graph.facebook.com/${one}/picture?width=512&height=512`, { responseType: 'arraybuffer' })).data;
-    fs.writeFileSync(avatarOne, Buffer.from(getAvatarOne, 'utf-8'));
-
-    let getAvatarTwo = (await axios.get(`https://graph.facebook.com/${two}/picture?width=512&height=512`, { responseType: 'arraybuffer' })).data;
-    fs.writeFileSync(avatarTwo, Buffer.from(getAvatarTwo, 'utf-8'));
+    let getAvatarOne = (await axios.get(
+      `https://graph.facebook.com/${one}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+      { responseType: 'arraybuffer' }
+    )).data;
+    fs.writeFileSync(avatarOne, Buffer.from(getAvatarOne, 'binary'));
   } catch (error) {
-    console.error("Error fetching profile pictures:", error);
-    throw error;
+    console.error(`Error downloading avatar for user ${one}:`, error.message);
+    throw new Error(`Failed to download avatar for user ${one}.`);
   }
 
-  // Process images with better positioning
+  try {
+    let getAvatarTwo = (await axios.get(
+      `https://graph.facebook.com/${two}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+      { responseType: 'arraybuffer' }
+    )).data;
+    fs.writeFileSync(avatarTwo, Buffer.from(getAvatarTwo, 'binary'));
+  } catch (error) {
+    console.error(`Error downloading avatar for user ${two}:`, error.message);
+    throw new Error(`Failed to download avatar for user ${two}.`);
+  }
+
   let circleOne = await jimp.read(await circle(avatarOne));
   let circleTwo = await jimp.read(await circle(avatarTwo));
 
-  // Adjust these coordinates to position the profile pictures perfectly
   pairing_img
-    .composite(circleOne.resize(200, 200), 150, 150)  // Left side
-    .composite(circleTwo.resize(200, 200), 450, 150); // Right side
-
-  // Add romantic overlay
-  const overlay = await jimp.read("https://i.imgur.com/XrYVh4P.png"); // Heart overlay
-  pairing_img.composite(overlay.resize(800, 500), 0, 0);
+    .composite(circleOne.resize(410, 410), 785, 184)
+    .composite(circleTwo.resize(410, 410), 94, 181);
 
   let raw = await pairing_img.getBufferAsync("image/png");
   fs.writeFileSync(pathImg, raw);
 
-  // Clean up
-  [avatarOne, avatarTwo, baseImagePath].forEach(file => {
-    if (fs.existsSync(file)) fs.unlinkSync(file);
-  });
+  fs.unlinkSync(avatarOne);
+  fs.unlinkSync(avatarTwo);
+  fs.unlinkSync(baseImagePath);
 
   return pathImg;
 }
@@ -81,32 +86,46 @@ async function circle(image) {
 module.exports.run = async function ({ api, event }) {
   const { threadID, messageID, senderID } = event;
   const fs = require("fs-extra");
-  
-  // Romantic compatibility percentages
-  const tl = ['21%', '35%', '55%', '89%', '22%', '45%', '99%', '78%', '15%', '91%', '77%', '100%'];
+  const tl = ['21%', '11%', '55%', '89%', '22%', '45%', '1%', '4%', '78%', '15%', '91%', '77%', '41%', '32%', '67%', '19%', '37%', '17%', '96%', '52%', '62%', '76%', '83%', '100%', '99%', "0%", "48%"];
   const tle = tl[Math.floor(Math.random() * tl.length)];
-  
-  // Romantic quotes
-  const quotes = [
-    "❤️ In your arms is where I belong, with you is where I feel strong ❤️",
-    "🌹 Two hearts, one love, forever entwined above 🌹",
-    "💞 Like stars in the night, our love shines bright 💞",
-    "✨ You and me, like a perfect harmony ✨",
-    "🌸 Our love story is my favorite, written in the stars above 🌸"
-  ];
-  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
 
   try {
     const userInfo = await api.getUserInfo(senderID);
     const namee = userInfo[senderID].name;
+    const senderGender = userInfo[senderID].gender;
 
     const threadInfo = await api.getThreadInfo(threadID);
-    const participants = threadInfo.participantIDs.filter(id => id != senderID);
-    const randomID = participants[Math.floor(Math.random() * participants.length)];
+    let participantIDs = threadInfo.participantIDs.filter(id => id !== senderID);
+
+    if (participantIDs.length === 0) {
+      return api.sendMessage(
+        "No other participants found in the group to pair with.",
+        threadID,
+        messageID
+      );
+    }
+
+    const participantsInfo = await api.getUserInfo(participantIDs);
+
+    let oppositeGenderIDs = [];
+
+    if (senderGender === 2) {
+      oppositeGenderIDs = participantIDs.filter(id => participantsInfo[id]?.gender === 1);
+    } else if (senderGender === 1) {
+      oppositeGenderIDs = participantIDs.filter(id => participantsInfo[id]?.gender === 2);
+    } else {
+      oppositeGenderIDs = participantIDs;
+    }
+
+    let randomID;
+    if (oppositeGenderIDs.length > 0) {
+      randomID = oppositeGenderIDs[Math.floor(Math.random() * oppositeGenderIDs.length)];
+    } else {
+      randomID = participantIDs[Math.floor(Math.random() * participantIDs.length)];
+    }
 
     const partnerInfo = await api.getUserInfo(randomID);
     const name = partnerInfo[randomID].name;
-    const gender = partnerInfo[randomID].gender == 2 ? "Male 🧑" : "Female 👩";
 
     const arraytag = [
       { id: senderID, tag: namee },
@@ -115,15 +134,19 @@ module.exports.run = async function ({ api, event }) {
 
     const one = senderID, two = randomID;
 
-    return makeImage({ one, two }).then(path => {
+    return makeImage({ one, two }).then(path =>
       api.sendMessage({
-        body: `💖 𝐑𝐨𝐦𝐚𝐧𝐭𝐢𝐜 𝐏𝐚𝐢𝐫𝐢𝐧𝐠 💖\n\n✨ ${namee} + ${name} = ${tle} Compatibility ✨\n\n${randomQuote}\n\n💌 "Some souls are meant to be together, like yours and mine forever" 💌\n\n🌸 𝐎𝐰𝐧𝐞𝐫: 𝐓𝐚𝐥𝐡𝐚 🌸`,
+        body: `🅢𝐔𝐂𝐂𝐄𝐒𝐒𝐅𝐔𝐋 🅟𝐀𝐈𝐑𝐈𝐍𝐆
+𝐇𝐎𝐏𝐄 𝐘𝐎𝐔 𝐁𝐎𝐓𝐇 𝐖𝐈𝐋𝐋 𝐒𝐓𝐎𝐏 𝐅𝐋𝐈𝐑𝐓𝐈𝐍𝐆 ⊂◉‿◉\n━━━━━━━━━━━━━━━━━━ ${namee} 💓 ${name}\n━━━━━━━━━━━━━━━━━━\n➥ 𝐃𝐎𝐔𝐁𝐋𝐄 𝐑𝐀𝐓𝐈𝐎: ${tle}%\n━━━━━━━━━━━━━━━━━━\n𝙊𝙬𝙣𝙚𝙧 𝙈𝙞𝙖𝙣 𝘼𝙢𝙞𝙧`,
         mentions: arraytag,
         attachment: fs.createReadStream(path)
-      }, threadID, () => fs.unlinkSync(path), messageID);
-    });
+      }, threadID, () => fs.unlinkSync(path), messageID));
   } catch (error) {
-    console.error("Error in pair command:", error);
-    api.sendMessage("❌ An error occurred while creating your romantic pair. Please try again later.", threadID, messageID);
+    console.error("Error in pair4 command:", error.message);
+    return api.sendMessage(
+      "An error occurred while pairing. Please try again later or contact the bot admin.",
+      threadID,
+      messageID
+    );
   }
 };
