@@ -1,10 +1,10 @@
 module.exports.config = {
   name: "pair",
-  version: "3.1",
+  version: "4.0",
   hasPermssion: 0,
   credits: "Talha",
-  description: "Perfect circle alignment for both positions",
-  commandCategory: "fun",
+  description: "Perfectly aligned pairing with circles",
+  commandCategory: "pair",
   cooldowns: 5,
   dependencies: {
     "axios": "",
@@ -14,113 +14,112 @@ module.exports.config = {
 };
 
 async function createPerfectPair({ user1, user2 }) {
-  const fs = global.nodemodule["fs-extra"];
-  const path = global.nodemodule["path"];
-  const axios = global.nodemodule["axios"];
-  const jimp = global.nodemodule["jimp"];
-  const __root = path.resolve(__dirname, "cache", "pair_circles");
+  const fs = require('fs-extra');
+  const path = require('path');
+  const axios = require('axios');
+  const jimp = require('jimp');
+  const __root = path.resolve(__dirname, "cache", "pair_images");
 
-  // Create directory
+  // Create directory if not exists
   if (!fs.existsSync(__root)) fs.mkdirSync(__root, { recursive: true });
 
   // File paths
   const bgPath = path.join(__root, "background.jpg");
   const leftPath = path.join(__root, "left.png");
   const rightPath = path.join(__root, "right.png");
-  const outputPath = path.join(__root, "paired_result.jpg");
+  const outputPath = path.join(__root, "result.jpg");
 
-  // Download background
-  await axios.get("https://i.ibb.co/bgFhk6Bb/Messenger-creation-2611011159251969.jpg", {
-    responseType: 'arraybuffer'
-  }).then(({ data }) => fs.writeFileSync(bgPath, Buffer.from(data, 'binary')));
+  try {
+    // Download background image
+    const bgResponse = await axios.get("https://i.ibb.co/bgFhk6Bb/Messenger-creation-2611011159251969.jpg", {
+      responseType: 'arraybuffer'
+    });
+    fs.writeFileSync(bgPath, Buffer.from(bgResponse.data, 'binary'));
 
-  // Download avatars with error handling
-  const downloadAvatar = async (uid, savePath) => {
-    try {
-      const { data } = await axios.get(
+    // Download profile pictures
+    const downloadAvatar = async (uid, savePath) => {
+      const response = await axios.get(
         `https://graph.facebook.com/${uid}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
         { responseType: 'arraybuffer' }
       );
-      fs.writeFileSync(savePath, Buffer.from(data, 'binary'));
-    } catch (e) {
-      throw new Error(`Failed to download avatar for ${uid}`);
-    }
-  };
+      fs.writeFileSync(savePath, Buffer.from(response.data, 'binary'));
+    };
 
-  await Promise.all([
-    downloadAvatar(user1, leftPath),
-    downloadAvatar(user2, rightPath)
-  ]);
+    await Promise.all([
+      downloadAvatar(user1, leftPath),
+      downloadAvatar(user2, rightPath)
+    ]);
 
-  // Process images
-  try {
+    // Process images
     const [background, leftAvatar, rightAvatar] = await Promise.all([
       jimp.read(bgPath),
       jimp.read(leftPath),
       jimp.read(rightPath)
     ]);
 
-    // Perfect circle settings
-    const circleDiameter = 360; // Optimal size for the rings
-    leftAvatar.circle().resize(circleDiameter, circleDiameter);
-    rightAvatar.circle().resize(circleDiameter, circleDiameter);
+    // Circle settings
+    const circleSize = 360;
+    leftAvatar.circle().resize(circleSize, circleSize);
+    rightAvatar.circle().resize(circleSize, circleSize);
 
-    // Exact tested positions
-    background.composite(leftAvatar, 130, 125);  // Left circle (perfectly centered)
-    background.composite(rightAvatar, 810, 125); // Right circle (perfectly centered)
+    // Perfect positions (tested coordinates)
+    background.composite(leftAvatar, 130, 125);  // Left circle
+    background.composite(rightAvatar, 810, 125); // Right circle
 
     await background.quality(100).writeAsync(outputPath);
-    
+
     // Cleanup
-    [bgPath, leftPath, rightPath].forEach(f => fs.existsSync(f) && fs.unlinkSync(f));
+    [bgPath, leftPath, rightPath].forEach(f => {
+      if (fs.existsSync(f)) fs.unlinkSync(f);
+    });
 
     return outputPath;
-  } catch (e) {
-    console.error("Image processing error:", e);
-    throw new Error("Failed to create paired image");
+  } catch (error) {
+    console.error("Error in createPerfectPair:", error);
+    throw error;
   }
 }
 
 module.exports.run = async function ({ api, event }) {
-  const { threadID, messageID, senderID } = event;
-  const fs = global.nodemodule["fs-extra"];
-  
   try {
-    // Get user and thread info
-    const [userInfo, threadInfo] = await Promise.all([
-      api.getUserInfo(senderID),
-      api.getThreadInfo(threadID)
-    ]);
-    
+    const fs = require('fs-extra');
+    const { threadID, messageID, senderID } = event;
+
+    // Get user info
+    const userInfo = await api.getUserInfo(senderID);
     const senderName = userInfo[senderID].name;
+
+    // Get thread info
+    const threadInfo = await api.getThreadInfo(threadID);
     const participants = threadInfo.participantIDs.filter(id => id !== senderID);
-    
+
     if (participants.length === 0) {
-      return api.sendMessage("No one to pair with! 😢", threadID, messageID);
+      return api.sendMessage("No users to pair with!", threadID, messageID);
     }
-    
+
     // Select random participant
     const pairID = participants[Math.floor(Math.random() * participants.length)];
-    const pairName = (await api.getUserInfo(pairID))[pairID].name;
-    
-    // Create perfectly aligned image
+    const pairInfo = await api.getUserInfo(pairID);
+    const pairName = pairInfo[pairID].name;
+
+    // Create image
     const resultImg = await createPerfectPair({
       user1: senderID,
       user2: pairID
     });
-    
-    // Send result with romantic message
+
+    // Send result
     return api.sendMessage({
-      body: `💘 PERFECT LOVE MATCH 💘\n━━━━━━━━━━━━━━━━━━\n${senderName} ❤️ ${pairName}\n━━━━━━━━━━━━━━━━━━\n💞 Compatibility: ${['96%','89%','100%','76%'][Math.floor(Math.random()*4)]}\n━━━━━━━━━━━━━━━━━━\n"Tu has to zamana hasta hai..."\n"Tu udas to dil tota hai..."\n━━━━━━━━━━━━━━━━━━\nOwner: Talha`,
+      body: `💘 PERFECT MATCH 💘\n━━━━━━━━━━━━━━━━━━\n${senderName} ❤️ ${pairName}\n━━━━━━━━━━━━━━━━━━\n💞 Compatibility: ${['96%','89%','100%','76%'][Math.floor(Math.random()*4)]}\n━━━━━━━━━━━━━━━━━━\nOwner: Talha`,
       mentions: [
         { tag: senderName, id: senderID },
         { tag: pairName, id: pairID }
       ],
       attachment: fs.createReadStream(resultImg)
     }, threadID, () => fs.unlinkSync(resultImg), messageID);
-    
+
   } catch (error) {
-    console.error("Pairing error:", error);
-    return api.sendMessage("Pairing failed. Please try again later!", threadID, messageID);
+    console.error("Error in pair command:", error);
+    return api.sendMessage("Failed to create pair. Please try again later!", threadID, messageID);
   }
 };
