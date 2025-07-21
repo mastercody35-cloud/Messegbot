@@ -1,10 +1,10 @@
 module.exports.config = {
-  name: "pair",
-  version: "4.0",
+  name: "pair4",
+  version: "1.0.1",
   hasPermssion: 0,
   credits: "Talha",
-  description: "Perfectly aligned pairing with circles",
-  commandCategory: "pair",
+  description: "Pair with people of the opposite gender in the group",
+  commandCategory: "For users",
   cooldowns: 5,
   dependencies: {
     "axios": "",
@@ -13,113 +13,132 @@ module.exports.config = {
   }
 };
 
-async function createPerfectPair({ user1, user2 }) {
-  const fs = require('fs-extra');
-  const path = require('path');
-  const axios = require('axios');
-  const jimp = require('jimp');
-  const __root = path.resolve(__dirname, "cache", "pair_images");
+async function makeImage({ one, two }) {
+  const fs = global.nodemodule["fs-extra"];
+  const path = global.nodemodule["path"];
+  const axios = global.nodemodule["axios"];
+  const jimp = global.nodemodule["jimp"];
+  const __root = path.resolve(__dirname, "cache", "canvas");
 
-  // Create directory if not exists
   if (!fs.existsSync(__root)) fs.mkdirSync(__root, { recursive: true });
 
-  // File paths
-  const bgPath = path.join(__root, "background.jpg");
-  const leftPath = path.join(__root, "left.png");
-  const rightPath = path.join(__root, "right.png");
-  const outputPath = path.join(__root, "result.jpg");
+  const pairingImgUrl = "https://i.ibb.co/bgFhk6Bb/Messenger-creation-2611011159251969.jpg";
+  const baseImagePath = path.join(__root, "pairing_temp.png");
+  const pathImg = path.join(__root, `pairing_${one}_${two}.png`);
+  const avatarOne = path.join(__root, `avt_${one}.png`);
+  const avatarTwo = path.join(__root, `avt_${two}.png`);
 
   try {
-    // Download background image
-    const bgResponse = await axios.get("https://i.ibb.co/bgFhk6Bb/Messenger-creation-2611011159251969.jpg", {
-      responseType: 'arraybuffer'
-    });
-    fs.writeFileSync(bgPath, Buffer.from(bgResponse.data, 'binary'));
+    const baseImageBuffer = (await axios.get(pairingImgUrl, { responseType: 'arraybuffer' })).data;
+    fs.writeFileSync(baseImagePath, Buffer.from(baseImageBuffer, 'binary'));
 
-    // Download profile pictures
-    const downloadAvatar = async (uid, savePath) => {
-      const response = await axios.get(
-        `https://graph.facebook.com/${uid}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
-        { responseType: 'arraybuffer' }
-      );
-      fs.writeFileSync(savePath, Buffer.from(response.data, 'binary'));
-    };
+    const avatarOneBuffer = (await axios.get(
+      `https://graph.facebook.com/${one}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+      { responseType: 'arraybuffer' }
+    )).data;
+    fs.writeFileSync(avatarOne, Buffer.from(avatarOneBuffer, 'binary'));
 
-    await Promise.all([
-      downloadAvatar(user1, leftPath),
-      downloadAvatar(user2, rightPath)
-    ]);
+    const avatarTwoBuffer = (await axios.get(
+      `https://graph.facebook.com/${two}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+      { responseType: 'arraybuffer' }
+    )).data;
+    fs.writeFileSync(avatarTwo, Buffer.from(avatarTwoBuffer, 'binary'));
 
-    // Process images
-    const [background, leftAvatar, rightAvatar] = await Promise.all([
-      jimp.read(bgPath),
-      jimp.read(leftPath),
-      jimp.read(rightPath)
-    ]);
+    let pairing_img = await jimp.read(baseImagePath);
+    let circleOne = await jimp.read(await circle(avatarOne));
+    let circleTwo = await jimp.read(await circle(avatarTwo));
 
-    // Circle settings
-    const circleSize = 360;
-    leftAvatar.circle().resize(circleSize, circleSize);
-    rightAvatar.circle().resize(circleSize, circleSize);
+    pairing_img
+      .composite(circleOne.resize(370, 370), 130, 170)
+      .composite(circleTwo.resize(370, 370), 790, 170);
 
-    // Perfect positions (tested coordinates)
-    background.composite(leftAvatar, 130, 125);  // Left circle
-    background.composite(rightAvatar, 810, 125); // Right circle
+    const raw = await pairing_img.getBufferAsync("image/png");
+    fs.writeFileSync(pathImg, raw);
 
-    await background.quality(100).writeAsync(outputPath);
+    fs.unlinkSync(avatarOne);
+    fs.unlinkSync(avatarTwo);
+    fs.unlinkSync(baseImagePath);
 
-    // Cleanup
-    [bgPath, leftPath, rightPath].forEach(f => {
-      if (fs.existsSync(f)) fs.unlinkSync(f);
-    });
-
-    return outputPath;
-  } catch (error) {
-    console.error("Error in createPerfectPair:", error);
-    throw error;
+    return pathImg;
+  } catch (err) {
+    console.error("Image generation failed:", err);
+    throw err;
   }
 }
 
+async function circle(image) {
+  const jimp = require("jimp");
+  image = await jimp.read(image);
+  image.circle();
+  return await image.getBufferAsync("image/png");
+}
+
 module.exports.run = async function ({ api, event }) {
+  const { threadID, messageID, senderID } = event;
+  const fs = require("fs-extra");
+  const tl = ['21%', '11%', '55%', '89%', '22%', '45%', '1%', '4%', '78%', '15%', '91%', '77%', '41%', '32%', '67%', '19%', '37%', '17%', '96%', '52%', '62%', '76%', '83%', '100%', '99%', "0%", "48%"];
+  const tle = tl[Math.floor(Math.random() * tl.length)];
+
   try {
-    const fs = require('fs-extra');
-    const { threadID, messageID, senderID } = event;
-
-    // Get user info
     const userInfo = await api.getUserInfo(senderID);
-    const senderName = userInfo[senderID].name;
+    const namee = userInfo[senderID].name;
+    const senderGender = userInfo[senderID].gender;
 
-    // Get thread info
     const threadInfo = await api.getThreadInfo(threadID);
-    const participants = threadInfo.participantIDs.filter(id => id !== senderID);
-
-    if (participants.length === 0) {
-      return api.sendMessage("No users to pair with!", threadID, messageID);
+    let participantIDs = threadInfo.participantIDs.filter(id => id !== senderID);
+    if (participantIDs.length === 0) {
+      return api.sendMessage("No other participants found in the group to pair with.", threadID, messageID);
     }
 
-    // Select random participant
-    const pairID = participants[Math.floor(Math.random() * participants.length)];
-    const pairInfo = await api.getUserInfo(pairID);
-    const pairName = pairInfo[pairID].name;
+    const participantsInfo = await api.getUserInfo(participantIDs);
+    let oppositeGenderIDs = [];
 
-    // Create image
-    const resultImg = await createPerfectPair({
-      user1: senderID,
-      user2: pairID
-    });
+    if (senderGender === 2) {
+      oppositeGenderIDs = participantIDs.filter(id => participantsInfo[id]?.gender === 1);
+    } else if (senderGender === 1) {
+      oppositeGenderIDs = participantIDs.filter(id => participantsInfo[id]?.gender === 2);
+    } else {
+      oppositeGenderIDs = participantIDs;
+    }
 
-    // Send result
-    return api.sendMessage({
-      body: `💘 PERFECT MATCH 💘\n━━━━━━━━━━━━━━━━━━\n${senderName} ❤️ ${pairName}\n━━━━━━━━━━━━━━━━━━\n💞 Compatibility: ${['96%','89%','100%','76%'][Math.floor(Math.random()*4)]}\n━━━━━━━━━━━━━━━━━━\nOwner: Talha`,
-      mentions: [
-        { tag: senderName, id: senderID },
-        { tag: pairName, id: pairID }
-      ],
-      attachment: fs.createReadStream(resultImg)
-    }, threadID, () => fs.unlinkSync(resultImg), messageID);
+    let randomID;
+    if (oppositeGenderIDs.length > 0) {
+      randomID = oppositeGenderIDs[Math.floor(Math.random() * oppositeGenderIDs.length)];
+    } else {
+      randomID = participantIDs[Math.floor(Math.random() * participantIDs.length)];
+    }
 
+    const partnerInfo = await api.getUserInfo(randomID);
+    const name = partnerInfo[randomID].name;
+
+    const arraytag = [
+      { id: senderID, tag: namee },
+      { id: randomID, tag: name }
+    ];
+
+    const one = senderID, two = randomID;
+
+    return makeImage({ one, two }).then(path =>
+      api.sendMessage({
+        body: `💖✨ 𝓢𝓾𝓬𝓬𝓮𝓼𝓼𝓯𝓾𝓵 𝓛𝓸𝓿𝓮 𝓜𝓪𝓽𝓬𝓱 ✨💖
+━━━━━━━━━━━━━━━━━━
+💘 𝓢𝓸𝓶𝓮𝔀𝓱𝓮𝓻𝓮 𝓫𝓮𝓽𝔀𝓮𝓮𝓷 𝓵𝓾𝓬𝓴 & 𝓭𝓮𝓼𝓽𝓲𝓷𝔂...
+
+💑 ${namee} 💞 ${name}
+❤️ 𝓛𝓸𝓿𝓮 𝓒𝓸𝓷𝓷𝓮𝓬𝓽𝓲𝓸𝓷: ${tle}
+
+📝 𝓡𝓸𝓶𝓪𝓷𝓽𝓲𝓬 𝓛𝓲𝓷𝓮𝓼:
+❝ 𝑻𝒖 𝒉𝒂𝒔𝒆 𝒕𝒐 𝒛𝒂𝒎𝒂𝒏𝒂 𝒉𝒂𝒔𝒕𝒂 𝒉𝒂𝒊...
+𝑻𝒖 𝒖𝒅𝒂𝒔 𝒕𝒐 𝒅𝒊𝒍 𝒕𝒐𝒕𝒂 𝒉𝒂𝒊... ❞
+
+👑 𝓞𝔀𝓷𝓮𝓻: 𝒯𝒶𝓁𝒽𝒶 𝒫𝒶𝓉𝒉𝒶𝓃 👑
+━━━━━━━━━━━━━━━━━━`,
+        mentions: arraytag,
+        attachment: fs.createReadStream(path)
+      }, threadID, () => fs.unlinkSync(path), messageID)
+    );
   } catch (error) {
-    console.error("Error in pair command:", error);
-    return api.sendMessage("Failed to create pair. Please try again later!", threadID, messageID);
+    console.error("Error in pair4 command:", error.message);
+    return api.sendMessage("Pairing failed. Try again later or contact admin.", threadID, messageID);
   }
 };
