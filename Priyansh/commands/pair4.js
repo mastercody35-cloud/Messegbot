@@ -2,9 +2,9 @@ module.exports.config = {
   name: "pair4",
   version: "1.0.1",
   hasPermssion: 0,
-  credits: "Fixed by Talha 🛠️",
-  description: "Stylish pairing with romantic background and DPs",
-  commandCategory: "Love",
+  credits: "Talha",
+  description: "Pair with people of the opposite gender in the group",
+  commandCategory: "For users",
   cooldowns: 5,
   dependencies: {
     "axios": "",
@@ -60,29 +60,26 @@ async function makeImage({ one, two }) {
     throw new Error(`Failed to download avatar for user ${two}.`);
   }
 
-  let circleOne = await jimp.read(await circle(avatarOne));
-  let circleTwo = await jimp.read(await circle(avatarTwo));
+  // Process avatars into circles
+  let circleOne = await jimp.read(avatarOne);
+  circleOne.circle();
+  let circleTwo = await jimp.read(avatarTwo);
+  circleTwo.circle();
 
-  // 🧠 Resize & Position Adjusted to match screenshot-style layout
+  // Composite the circular avatars onto the base image
   pairing_img
-    .composite(circleOne.resize(320, 320), 115, 330) // Left side
-    .composite(circleTwo.resize(320, 320), 890, 330); // Right side
+    .composite(circleOne.resize(410, 410), 785, 184)
+    .composite(circleTwo.resize(410, 410), 94, 181);
 
   let raw = await pairing_img.getBufferAsync("image/png");
   fs.writeFileSync(pathImg, raw);
 
+  // Clean up temporary files
   fs.unlinkSync(avatarOne);
   fs.unlinkSync(avatarTwo);
   fs.unlinkSync(baseImagePath);
 
   return pathImg;
-}
-
-async function circle(image) {
-  const jimp = require("jimp");
-  image = await jimp.read(image);
-  image.circle();
-  return await image.getBufferAsync("image/png");
 }
 
 module.exports.run = async function ({ api, event }) {
@@ -95,15 +92,13 @@ module.exports.run = async function ({ api, event }) {
     const userInfo = await api.getUserInfo(senderID);
     const namee = userInfo[senderID].name;
     const senderGender = userInfo[senderID].gender;
-
     const threadInfo = await api.getThreadInfo(threadID);
     let participantIDs = threadInfo.participantIDs.filter(id => id !== senderID);
 
     if (participantIDs.length === 0) {
       return api.sendMessage(
         "No other participants found in the group to pair with.",
-        threadID,
-        messageID
+        threadID, messageID
       );
     }
 
@@ -127,26 +122,22 @@ module.exports.run = async function ({ api, event }) {
 
     const partnerInfo = await api.getUserInfo(randomID);
     const name = partnerInfo[randomID].name;
-
     const arraytag = [
       { id: senderID, tag: namee },
       { id: randomID, tag: name }
     ];
 
     const one = senderID, two = randomID;
-
-    return makeImage({ one, two }).then(path =>
-      api.sendMessage({
-        body: `🅢𝐔𝐂𝐂𝐄𝐒𝐒𝐅𝐔𝐋 🅟𝐀𝐈𝐑𝐈𝐍𝐆 💞\n𝐇𝐎𝐏𝐄 𝐘𝐎𝐔 𝐁𝐎𝐓𝐇 𝐖𝐈𝐋𝐋 𝐒𝐓𝐎𝐏 𝐅𝐋𝐈𝐑𝐓𝐈𝐍𝐆 ⊂◉‿◉\n━━━━━━━━━━━━━━━━━━\n${namee} 💓 ${name}\n━━━━━━━━━━━━━━━━━━\n➥ 𝐃𝐎𝐔𝐁𝐋𝐄 𝐑𝐀𝐓𝐈𝐎: ${tle}\n━━━━━━━━━━━━━━━━━━\n⚜️ 𝐎𝐰𝐧𝐞𝐫: 𝐓𝐚𝐥𝐡𝐚 ❤`,
-        mentions: arraytag,
-        attachment: fs.createReadStream(path)
-      }, threadID, () => fs.unlinkSync(path), messageID));
+    return makeImage({ one, two }).then(path => api.sendMessage({
+      body: `🅢𝐔𝐂𝐂𝐄𝐒𝐒𝐅𝐔𝐋 🅟𝐀𝐈𝐑𝐈𝐍𝐆 𝐇𝐎𝐏𝐄 𝐘𝐎𝐔 𝐁𝐎𝐓𝐇 𝐖𝐈𝐋𝐋 𝐒𝐓𝐎𝐏 𝐅𝐋𝐈𝐑𝐓𝐈𝐍𝐆 ⊂◉‿◉\n━━━━━━━━━━━━━━━━━━ ${namee} 💓 ${name}\n━━━━━━━━━━━━━━━━━━\n➥ 𝐃𝐎𝐔𝐁𝐋𝐄 𝐑𝐀𝐓𝐈𝐎: ${tle}%\n━━━━━━━━━━━━━━━━━━\n𝙊𝙬𝙣𝙚𝙧 𝙈𝙞𝙖𝙣 𝘼𝙢𝙞𝙧`,
+      mentions: arraytag,
+      attachment: fs.createReadStream(path)
+    }, threadID, () => fs.unlinkSync(path), messageID));
   } catch (error) {
     console.error("Error in pair4 command:", error.message);
     return api.sendMessage(
       "An error occurred while pairing. Please try again later or contact the bot admin.",
-      threadID,
-      messageID
+      threadID, messageID
     );
   }
 };
