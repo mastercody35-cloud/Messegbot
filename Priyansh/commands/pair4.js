@@ -2,7 +2,7 @@ module.exports.config = {
   name: "pair4",
   version: "1.0.1",
   hasPermssion: 0,
-  credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+  credits: "Talha",
   description: "Pair with people of the opposite gender in the group",
   commandCategory: "For users",
   cooldowns: 5,
@@ -22,7 +22,7 @@ async function makeImage({ one, two }) {
 
   if (!fs.existsSync(__root)) fs.mkdirSync(__root, { recursive: true });
 
-  const pairingImgUrl = "https%3A%2F%2Fi.ibb.co%2FbgFhk6Bb%2FMessenger-creation-2611011159251969.jpg";
+  const pairingImgUrl = "https://i.ibb.co/bgFhk6Bb/Messenger-creation-2611011159251969.jpg";
   const baseImagePath = path.join(__root, "pairing_temp.png");
   try {
     const baseImageBuffer = (await axios.get(pairingImgUrl, { responseType: 'arraybuffer' })).data;
