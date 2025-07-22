@@ -4,10 +4,10 @@ const path = require('path');
 
 module.exports.config = {
     name: "naat",
-    version: "2.0",
+    version: "3.0",
     hasPermssion: 0,
     credits: "Talha Pathan",
-    description: "Play viral Urdu Naats with Allah's image",
+    description: "Play viral Urdu Naats with audio and Allah's image",
     commandCategory: "islamic",
     usages: "[search]",
     cooldowns: 15
@@ -19,100 +19,80 @@ const NAAT_DB = [
         title: "Mere Maula Karam Farmaa",
         lyrics: "میرے مولا کرم فرما، میرے حال پہ رحم فرما\nمجھے اپنا بنا لے، مجھے اپنا بنا لے",
         reciter: "Junaid Jamshed",
-        audio: "https://example.com/naat1.mp3" // Replace with actual audio URLs
+        audio: "https://drive.google.com/uc?export=download&id=1AbCdEfGhIjKlMnOpQrStUvWxYz" // Example link
     },
     {
         title: "Dil Se Dilbar",
         lyrics: "دل سے دلبر تک جس نے راہ بنائی\nوہی راہوں کا مسافر ہو محمدﷺ",
         reciter: "Owais Raza Qadri",
-        audio: "https://example.com/naat2.mp3"
+        audio: "https://drive.google.com/uc?export=download&id=2BcDeFgHiJkLmNoPqRsTuVwXyZ"
     },
     // Add 98 more naats...
     {
         title: "Taajdar-e-Haram",
-        lyrics: "تاجدار حرم ہو نبیﷺ کے چہرے کے نور ہو\nآپﷺ کی ذات پہ لاکھوں سلام ہو",
+        lyrics: "تاجدار حرم ہو نبیﷺ کے چہرے کے نور ہو",
         reciter: "Sami Yusuf",
-        audio: "https://example.com/naat100.mp3"
+        audio: "https://drive.google.com/uc?export=download&id=3CdEfGhIjKlMnOpQrStUvWxYz"
     }
 ];
 
 module.exports.run = async function({ api, event, args }) {
     try {
         // Get random naat
-        const naatData = NAAT_DB[Math.floor(Math.random() * NAAT_DB.length)];
+        const naat = NAAT_DB[Math.floor(Math.random() * NAAT_DB.length)];
         
         // Download Allah image
-        const allahImageURL = "https://i.imgur.com/9hRjZ7y.jpg"; // High quality Allah name image
-        const imagePath = path.join(__dirname, 'cache', 'allah_image.jpg');
+        const imgURL = "https://i.ibb.co/5sS2QyP/allah-name.jpg"; // High quality Allah name image
+        const imgPath = path.join(__dirname, 'cache', 'allah_naat.jpg');
         
-        const imgResponse = await axios({
-            method: 'GET',
-            url: allahImageURL,
-            responseType: 'stream'
-        });
-        
-        const imgWriter = fs.createWriteStream(imagePath);
+        const imgResponse = await axios.get(imgURL, { responseType: 'stream' });
+        const imgWriter = fs.createWriteStream(imgPath);
         imgResponse.data.pipe(imgWriter);
         
-        await new Promise((resolve, reject) => {
-            imgWriter.on('finish', resolve);
-            imgWriter.on('error', reject);
-        });
-
         // Download naat audio
-        const audioPath = path.join(__dirname, 'cache', 'naat_audio.mp3');
-        const audioResponse = await axios({
-            method: 'GET',
-            url: naatData.audio,
-            responseType: 'stream'
-        });
-        
+        const audioPath = path.join(__dirname, 'cache', 'naat.mp3');
+        const audioResponse = await axios.get(naat.audio, { responseType: 'stream' });
         const audioWriter = fs.createWriteStream(audioPath);
         audioResponse.data.pipe(audioWriter);
         
-        await new Promise((resolve, reject) => {
-            audioWriter.on('finish', resolve);
-            audioWriter.on('error', reject);
-        });
+        // Wait for both downloads to complete
+        await Promise.all([
+            new Promise(resolve => imgWriter.on('finish', resolve)),
+            new Promise(resolve => audioWriter.on('finish', resolve))
+        ]);
 
         // Stylish message format
-        const formattedMsg = `╭───────────────────╮
-   『 𝗡𝗔𝗔𝗧 𝗦𝗛𝗔𝗥𝗜𝗙 』
-╰───────────────────╯
+        const msg = `╭───────────────╮
+  『 𝗡𝗔𝗔𝗧 𝗦𝗛𝗔𝗥𝗜𝗙 』
+╰───────────────╯
 
-🎵 𝗧𝗶𝘁𝗹𝗲: ${naatData.title}
-🎤 𝗥𝗲𝗰𝗶𝘁𝗲𝗿: ${naatData.reciter}
+🎵 𝗧𝗶𝘁𝗹𝗲: ${naat.title}
+🎙️ 𝗥𝗲𝗰𝗶𝘁𝗲𝗿: ${naat.reciter}
 
 📜 𝗟𝘆𝗿𝗶𝗰𝘀:
-${naatData.lyrics}
+${naat.lyrics}
 
-👑 𝗢𝘄𝗻𝗲𝗿: 𝐓𝐀𝐋𝐇𝐀 𝐏𝐀𝐓𝐇𝐀𝐍 💞`;
+👑 𝗢𝘄𝗻𝗲𝗿: 𝐓𝐀𝐋𝐇𝐀 𝐏𝐀𝐓𝐇𝐀𝐍 🥰💞`;
 
         // Send message with audio and image
         api.sendMessage({
-            body: formattedMsg,
+            body: msg,
             attachment: [
-                fs.createReadStream(imagePath),
+                fs.createReadStream(imgPath),
                 fs.createReadStream(audioPath)
             ]
         }, event.threadID, () => {
-            fs.unlinkSync(imagePath);
+            fs.unlinkSync(imgPath);
             fs.unlinkSync(audioPath);
-        }, event.messageID);
+        });
 
     } catch (error) {
-        console.error("Naat Error:", error);
-        // Fallback text response
-        const fallbackNaat = NAAT_DB[Math.floor(Math.random() * NAAT_DB.length)];
+        console.error("Error:", error);
         api.sendMessage(
-            `🎵 𝗡𝗮𝘂𝘁 𝗦𝗵𝗮𝗿𝗶𝗳\n\n` +
-            `𝗧𝗶𝘁𝗹𝗲: ${fallbackNaat.title}\n` +
-            `𝗥𝗲𝗰𝗶𝘁𝗲𝗿: ${fallbackNaat.reciter}\n\n` +
-            `𝗟𝘆𝗿𝗶𝗰𝘀:\n${fallbackNaat.lyrics}\n\n` +
-            `⚠️ 𝗘𝗿𝗿𝗼𝗿 𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗺𝗲𝗱𝗶𝗮\n` +
-            `👑 𝗢𝘄𝗻𝗲𝗿: 𝐓𝐀𝐋𝐇𝐀 𝐏𝐀𝐓𝐇𝐀𝐍 💞`,
-            event.threadID,
-            event.messageID
+            `⚠️ Couldn't send naat. Please try again later.\n\n` +
+            `"${NAAT_DB[Math.floor(Math.random()*NAAT_DB.length)].title}"\n\n` +
+            `👑 𝐎𝐰𝐧𝐞𝐫: 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧 `,
+            event.threadID
         );
     }
 };
