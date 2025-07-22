@@ -3,115 +3,98 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports.config = {
-    name: "logo",
-    version: "2.0",
-    hasPermssion: 0,
-    credits: "Talha Pathan",
-    description: "Premium logos with paginated list and designs",
-    commandCategory: "design",
-    usages: "[list/page number/logo name]",
-    cooldowns: 10
+  name: "logo",
+  version: "3.0",
+  hasPermssion: 0,
+  credits: "Talha Pathan",
+  description: "Send cool logos with preview list",
+  commandCategory: "design",
+  usages: "[list/page number/logo name]",
+  cooldowns: 5
 };
 
-// Complete 50 Logos Database
 const LOGO_DB = [
-    { name: "🔥 Glowing Fire", url: "https://i.imgur.com/glowingfire.png", style: "3D fire effect" },
-    { name: "💎 Crystal Glass", url: "https://i.imgur.com/crystalglass.png", style: "Glass refraction" },
-    { name: "⚡ Electric Neon", url: "https://i.imgur.com/electricneon.png", style: "Neon glow" },
-    { name: "🌌 Galaxy", url: "https://i.imgur.com/galaxylogo.png", style: "Space nebula effect" },
-    { name: "🦋 Butterfly", url: "https://i.imgur.com/butterflylogo.png", style: "Colorful wings" },
-    { name: "🏆 Champion", url: "https://i.imgur.com/championlogo.png", style: "Trophy design" },
-    { name: "🐉 Dragon", url: "https://i.imgur.com/dragonlogo.png", style: "Mythical creature" },
-    { name: "🌹 Romantic", url: "https://i.imgur.com/romanticlogo.png", style: "Rose petals" },
-    { name: "🧊 Ice", url: "https://i.imgur.com/icelogo.png", style: "Frozen text" },
-    { name: "🍭 Candy", url: "https://i.imgur.com/candylogo.png", style: "Sweet colorful" },
-    // Continue adding more logos up to 50...
-    { name: "🎄 Christmas", url: "https://i.imgur.com/christmaslogo.png", style: "Festive holiday" }
+  { name: "Glowing Fire", url: "https://i.imgur.com/BsY0Oqg.jpg", style: "🔥 Fire Style" },
+  { name: "Neon Light", url: "https://i.imgur.com/LmsbTzz.jpg", style: "🌟 Neon Effect" },
+  { name: "Crystal Shine", url: "https://i.imgur.com/sE2JqEj.jpg", style: "💎 Crystal Logo" },
+  { name: "Dark Metal", url: "https://i.imgur.com/HnKJ0Z9.jpg", style: "⚙️ Steel Style" },
+  { name: "Water Splash", url: "https://i.imgur.com/3zTT2Er.jpg", style: "💧 Aqua Logo" },
+  { name: "Sky Gradient", url: "https://i.imgur.com/DYj2fSH.jpg", style: "🌈 Sky Style" },
+  { name: "Smoke Shadow", url: "https://i.imgur.com/fAnB40x.jpg", style: "☁️ Smoke FX" },
+  { name: "Retro Pixel", url: "https://i.imgur.com/zs1FYe7.jpg", style: "🕹️ Pixel Art" },
+  { name: "Cyber Grid", url: "https://i.imgur.com/c8DVR6C.jpg", style: "💻 Cyber Grid" },
+  { name: "Rainbow Text", url: "https://i.imgur.com/3RzG9sz.jpg", style: "🌈 Rainbow Vibes" },
+  // Add 40 more...
+  { name: "Gold Royal", url: "https://i.imgur.com/Sm7bzQo.jpg", style: "👑 Gold Text" },
+  { name: "Glitch FX", url: "https://i.imgur.com/Iuf9kqO.jpg", style: "🔧 Glitch Style" },
+  { name: "Thunder Text", url: "https://i.imgur.com/hDw1YZL.jpg", style: "⚡ Thunder Glow" },
+  { name: "Lava Heat", url: "https://i.imgur.com/o6q6Qei.jpg", style: "🌋 Lava Theme" },
+  { name: "Ice Letters", url: "https://i.imgur.com/tqD9zH2.jpg", style: "❄️ Frozen Font" },
+  { name: "Metal Steel", url: "https://i.imgur.com/nKqxdS4.jpg", style: "🔩 Steel Cut" },
+  { name: "Ink Style", url: "https://i.imgur.com/ctO2N8J.jpg", style: "🖋️ Ink Flow" },
+  { name: "Magic Dust", url: "https://i.imgur.com/LHqZl8s.jpg", style: "✨ Fairy Dust" },
+  { name: "Laser Burn", url: "https://i.imgur.com/IRNReI5.jpg", style: "🔴 Laser Shot" },
+  { name: "Night Glare", url: "https://i.imgur.com/rjQ1F7R.jpg", style: "🌌 Night Mode" },
+  // Add up to 50 total logos
 ];
 
-// Constants for pagination
 const LOGOS_PER_PAGE = 10;
 const TOTAL_PAGES = Math.ceil(LOGO_DB.length / LOGOS_PER_PAGE);
 
 module.exports.run = async function({ api, event, args }) {
-    try {
-        // Handle logo list request
-        if (args[0]?.toLowerCase() === 'list') {
-            const page = parseInt(args[1]) || 1;
-            if (page < 1 || page > TOTAL_PAGES) {
-                return api.sendMessage(`Invalid page number. Please select between 1-${TOTAL_PAGES}`, event.threadID);
-            }
+  try {
+    const input = args.join(" ").toLowerCase();
 
-            const startIdx = (page - 1) * LOGOS_PER_PAGE;
-            const pageLogos = LOGO_DB.slice(startIdx, startIdx + LOGOS_PER_PAGE);
+    if (input.startsWith("list")) {
+      const page = parseInt(args[1]) || 1;
+      if (page < 1 || page > TOTAL_PAGES) {
+        return api.sendMessage(`❌ Invalid page. Use 1 to ${TOTAL_PAGES}`, event.threadID);
+      }
 
-            let listMsg = `╭───────────────────╮\n   📜 𝗟𝗢𝗚𝗢 𝗟𝗜𝗦𝗧 (𝗣𝗮𝗴𝗲 ${page}/${TOTAL_PAGES})\n╰───────────────────╯\n\n`;
-            pageLogos.forEach((logo, i) => {
-                listMsg += `${startIdx + i + 1}. ${logo.name} - ${logo.style}\n`;
-            });
+      const start = (page - 1) * LOGOS_PER_PAGE;
+      const logos = LOGO_DB.slice(start, start + LOGOS_PER_PAGE);
+      let listText = `🖼️ 𝗟𝗢𝗚𝗢 𝗟𝗜𝗦𝗧 (Page ${page}/${TOTAL_PAGES})\n\n`;
 
-            listMsg += `\n📌 Usage: logo [number/name]\n👑 Owner: 𝕿𝖆𝖑𝖍𝖆 𝕻𝖆𝖙𝖍𝖆𝖓`;
-            return api.sendMessage(listMsg, event.threadID);
-        }
+      logos.forEach((logo, i) => {
+        listText += `${start + i + 1}. ${logo.name} (${logo.style})\n`;
+      });
 
-        // Handle specific logo request by number or name
-        let logo;
-        if (!isNaN(args[0])) {
-            const num = parseInt(args[0]);
-            if (num < 1 || num > LOGO_DB.length) {
-                return api.sendMessage(`Please select a logo number between 1-${LOGO_DB.length}`, event.threadID);
-            }
-            logo = LOGO_DB[num - 1];
-        } else if (args[0]) {
-            const searchTerm = args.join(' ').toLowerCase();
-            logo = LOGO_DB.find(l => l.name.toLowerCase().includes(searchTerm));
-            if (!logo) {
-                return api.sendMessage(`Logo not found. Type "logo list" to see available designs`, event.threadID);
-            }
-        } else {
-            // Random logo if no args
-            logo = LOGO_DB[Math.floor(Math.random() * LOGO_DB.length)];
-        }
-
-        // Download and send the logo
-        const imgPath = path.join(__dirname, 'cache', 'premium_logo.jpg');
-        const response = await axios.get(logo.url, { responseType: 'stream' });
-        const writer = fs.createWriteStream(imgPath);
-        response.data.pipe(writer);
-        
-        await new Promise((resolve, reject) => {
-            writer.on('finish', resolve);
-            writer.on('error', reject);
-        });
-
-        const formattedMsg = `╭───────────────────╮
-   ✨ 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗟𝗢𝗚𝗢 ✨
-╰───────────────────╯
-
-🆔 𝗡𝗮𝗺𝗲: ${logo.name}
-🎨 𝗦𝘁𝘆𝗹𝗲: ${logo.style}
-
-📌 𝗥𝗲𝗾𝘂𝗲𝘀𝘁𝗲𝗱 𝗯𝘆: ${event.senderName}
-👑 𝗢𝘄𝗻𝗲𝗿: 𝐓𝐀𝐋𝐇𝐀 𝐏𝐀𝐓𝐇𝐀𝐍 💞
-
-💡 𝗧𝗶𝗽: Type 'logo list' to see all designs`;
-
-        api.sendMessage({
-            body: formattedMsg,
-            attachment: fs.createReadStream(imgPath)
-        }, event.threadID, () => fs.unlinkSync(imgPath));
-
-    } catch (error) {
-        console.error("Logo Error:", error);
-        api.sendMessage(
-            `╭───────────────────╮
-   ✨ 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗟𝗢𝗚𝗢 ✨
-╰───────────────────╯
-
-⚠️ Error loading logo. Please try again!
-
-👑 𝐎𝐰𝐧𝐞𝐫: 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧`,
-            event.threadID
-        );
+      listText += `\nUse: logo [name or number]\nExample: logo 3\n\n✨ 𝑴𝑨𝑫𝑬 𝑩𝒀 𝑻𝑨𝑳𝑯𝑨 𝑷𝑨𝑻𝑯𝑨𝑵\n📎 fb.com/yourusername\n👑 Owner: Talha Pathan`;
+      return api.sendMessage(listText, event.threadID);
     }
+
+    let logo;
+    if (!isNaN(input) && parseInt(input) > 0 && parseInt(input) <= LOGO_DB.length) {
+      logo = LOGO_DB[parseInt(input) - 1];
+    } else if (input) {
+      logo = LOGO_DB.find(l => l.name.toLowerCase().includes(input));
+    } else {
+      logo = LOGO_DB[Math.floor(Math.random() * LOGO_DB.length)];
+    }
+
+    if (!logo) {
+      return api.sendMessage(`❌ Logo not found. Use "logo list" to view available logos.`, event.threadID);
+    }
+
+    const imgPath = path.join(__dirname, 'cache', `${logo.name.replace(/\s+/g, '_')}.jpg`);
+    const response = await axios.get(logo.url, { responseType: 'stream' });
+
+    await new Promise((resolve, reject) => {
+      const stream = fs.createWriteStream(imgPath);
+      response.data.pipe(stream);
+      stream.on('finish', resolve);
+      stream.on('error', reject);
+    });
+
+    const bodyMsg = `✨ 𝙏𝙃𝙄𝙎 𝙇𝙊𝙂𝙊 𝙈𝘼𝘿𝙀 𝘽𝙔 𝙏𝘼𝙇𝙃𝘼 𝙋𝘼𝙏𝙃𝘼𝙉\n🖼️ 𝐍𝐚𝐦𝐞: ${logo.name}\n🎨 𝐒𝐭𝐲𝐥𝐞: ${logo.style}\n📎𝐎𝐰𝐧𝐞𝐫 𝐅𝐛.https://www.facebook.com/share/193GypVyJQ/\n👑 𝐎𝐰𝐧𝐞𝐫: 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧`;
+
+    api.sendMessage({
+      body: bodyMsg,
+      attachment: fs.createReadStream(imgPath)
+    }, event.threadID, () => fs.unlinkSync(imgPath));
+
+  } catch (err) {
+    console.error(err);
+    api.sendMessage(`⚠️ Failed to send logo. Try again later.`, event.threadID);
+  }
 };
