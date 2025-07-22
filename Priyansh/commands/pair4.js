@@ -49,8 +49,8 @@ async function makeImage({ one, two }) {
     let circleTwo = await jimp.read(await circle(avatarTwo));
 
     pairing_img
-      .composite(circleOne.resize(370, 370), 120, 145)
-      .composite(circleTwo.resize(370, 370), 790, 155);
+      .composite(circleOne.resize(120, 250), 260, 260)
+      .composite(circleTwo.resize(630, 250), 260, 260);
 
     const raw = await pairing_img.getBufferAsync("image/png");
     fs.writeFileSync(pathImg, raw);
