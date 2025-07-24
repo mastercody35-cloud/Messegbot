@@ -4,10 +4,10 @@ const path = require('path');
 
 module.exports.config = {
   name: "talhaai",
-  version: "3.1",
+  version: "3.5",
   hasPermssion: 0,
   credits: "Talha Pathan",
-  description: "Improved Talha AI Voice Assistant",
+  description: "Smart Talha AI with Voice",
   commandCategory: "AI",
   usages: "[question]",
   cooldowns: 5
@@ -15,37 +15,39 @@ module.exports.config = {
 
 module.exports.run = async function({ api, event, args }) {
   const question = args.join(" ");
-  if (!question) return api.sendMessage("🤖 Talha AI: Kuch poocho na bhai!", event.threadID, event.messageID);
+  if (!question) return api.sendMessage("🤖 Talha AI: Kuch to pooch bhai!", event.threadID, event.messageID);
+
+  const cacheDir = path.join(__dirname, 'cache');
+  if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir); // Ensure cache folder exists
 
   try {
-    // Step 1: Get AI response using more reliable API
-    const aiResponse = await axios.get(`https://api.ainz-sama.xyz/api/gpt4?query=${encodeURIComponent(question)}`);
-    const answer = aiResponse.data.response || "Abhi jawab dene mein thodi problem ho rahi hai";
+    // Get AI response
+    const aiRes = await axios.get(`https://api.ainz-sama.xyz/api/gpt4?query=${encodeURIComponent(question)}`);
+    const answer = aiRes?.data?.response || "Talha AI: Jawab nahi mila bhai.";
 
-    // Step 2: Convert to voice using reliable TTS
-    const ttsResponse = await axios.get(`https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(answer)}&speaker=3`, {
+    // Get voice from TTS
+    const ttsRes = await axios.get(`https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(answer)}&speaker=14`, {
       responseType: 'arraybuffer'
     });
 
-    const voicePath = path.join(__dirname, 'cache', 'talha_voice.mp3');
-    fs.writeFileSync(voicePath, ttsResponse.data);
+    const filePath = path.join(cacheDir, 'talha_voice.mp3');
+    fs.writeFileSync(filePath, ttsRes.data);
 
-    // Step 3: Send both text and voice
+    // Send voice and text
     api.sendMessage({
-      body: `🗣️ Talha AI:\n\n${answer}`,
-      attachment: fs.createReadStream(voicePath)
-    }, event.threadID, () => {
-      fs.unlinkSync(voicePath);
-    }, event.messageID);
+      body: `🎙️ Talha AI:\n\n${answer}`,
+      attachment: fs.createReadStream(filePath)
+    }, event.threadID, () => fs.unlinkSync(filePath), event.messageID);
 
-  } catch (error) {
-    console.error("Error:", error);
-    // Fallback to text-only response if voice fails
+  } catch (err) {
+    console.log("❌ TalhaAI Error:", err.message);
+    // If voice fails, send only text
     try {
-      const fallbackResponse = await axios.get(`https://api.ainz-sama.xyz/api/gpt4?query=${encodeURIComponent(question)}`);
-      api.sendMessage(`🤖 Talha AI (Text Only):\n\n${fallbackResponse.data.response || "Abhi technical issue chal raha hai"}`, event.threadID, event.messageID);
+      const fallback = await axios.get(`https://api.ainz-sama.xyz/api/gpt4?query=${encodeURIComponent(question)}`);
+      const fallbackText = fallback?.data?.response || "Talha AI: Abhi kuch masla hai, text hi bhej raha hoon.";
+      return api.sendMessage(`📩 Talha AI (Text Only):\n\n${fallbackText}`, event.threadID, event.messageID);
     } catch (e) {
-      api.sendMessage("🤖 Talha AI: Abhi thodi technical problem chal rahi hai, thodi der baad try karna", event.threadID, event.messageID);
+      return api.sendMessage("⚠️ Talha AI: System busy hai bhai, thodi dair baad try karo.", event.threadID, event.messageID);
     }
   }
 };
