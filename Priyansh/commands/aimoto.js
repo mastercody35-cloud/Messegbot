@@ -7,7 +7,7 @@ module.exports.config = {
   name: "moto",
   version: "5.2.0",
   hasPermission: 2,
-  credits: "M Talha ",
+  credits: "M Talha",
   description: "AI Pathan Boy Moto with smart UID memory and tone-based replies",
   commandCategory: "AI",
   usages: "moto on / moto off / moto status",
@@ -113,7 +113,6 @@ module.exports.handleEvent = async function ({ api, event }) {
   const lc = msg.toLowerCase();
   const { time, date, day, partOfDay } = getLahoreInfo();
 
-  // Mention search
   if (Object.keys(mentions || {}).length > 0) {
     for (let id in mentions) {
       if (id === senderID) continue;
@@ -144,7 +143,6 @@ module.exports.handleEvent = async function ({ api, event }) {
     }
   }
 
-  // Tone and History
   const tone = detectTone(msg);
   userData.tone = tone;
   userData.history.push({ role: "user", content: msg });
@@ -179,7 +177,8 @@ module.exports.handleEvent = async function ({ api, event }) {
 
   } catch (err) {
     console.error("❌ Moto Error:", err.message);
-    return api.sendMessage(`${userTag}, Moto thoda busy hai abhi... thodi dair baad milte hain bro 🔧`, threadID, messageID);
+    // Silence the error, don't show busy message
+    return;
   }
 };
 
