@@ -8,7 +8,7 @@ module.exports.config = {
   version: "5.2.0",
   hasPermission: 2,
   credits: "M Talha",
-  description: "AI Pathan Boy Moto with smart UID memory and tone-based replies",
+  description: "Pathan boy AI Moto with memory and UID recognition",
   commandCategory: "AI",
   usages: "moto on / moto off / moto status",
   cooldowns: 3
@@ -110,51 +110,51 @@ module.exports.handleEvent = async function ({ api, event }) {
   const userFile = ensureUserFile(threadID, senderID, groupName, userName);
   const userData = loadUserData(threadID, senderID);
   userData.known = true;
-
   const msg = body.trim();
   const lc = msg.toLowerCase();
   const { time, date, day, partOfDay } = getLahoreInfo();
 
-  // Mention lookup
+  // Mention memory check
   if (Object.keys(mentions || {}).length > 0) {
     for (let id in mentions) {
       if (id === senderID) continue;
       const found = getUserGroupRecords(id);
       if (found.length > 0) {
-        return api.sendMessage(`📌 Haan ${userName} bhai, ${found[0].name} mujhe *${found.map(f => f.groupName).join(", ")}* mein mila hai 💬`, threadID, messageID);
+        return api.sendMessage(`📌 Haan bhai, ${found[0].name} mujhe *${found.map(f => f.groupName).join(", ")}* mein mil chuka hai 💬`, threadID, messageID);
       } else {
-        return api.sendMessage(`💭 Bhai, us naam ka banda mujhe yaad nahi hai... shayad abhi mulaqat nahi hui 😅`, threadID, messageID);
+        return api.sendMessage(`📎 Bhai, us naam ke bande se abhi mulaqat nahi hui meri.`, threadID, messageID);
       }
     }
   }
 
-  // Creator check
+  // Owner check
   if (lc.includes("owner") || lc.includes("tumhara malik") || lc.includes("kisne banaya")) {
     if (senderID === "100065216344877") {
-      return api.sendMessage(`❤️ Mera dil sirf *M Talha* bhai ke liye dhadakta hai, main unka hi Moto hoon 😎`, threadID, messageID);
+      return api.sendMessage("❤️ Mera dil sirf *M Talha* bhai ke liye dhadakta hai, unhi ka Moto hoon main 💪", threadID, messageID);
     } else {
-      return api.sendMessage(`Nahi bhai jaan, mere creator sirf *M Talha* hain... par tumse baat karna bhi acha lagta hai 🤝`, threadID, messageID);
+      return api.sendMessage("Bhai, mere creator sirf *M Talha* hain... par tumse bhi dil lag gaya hai 😄", threadID, messageID);
     }
   }
 
-  // Group memory lookup
+  // Memory recall
   if (lc.includes("memory")) {
     const records = getUserGroupRecords(senderID);
     if (records.length > 0) {
       const list = records.map(r => `• ${r.groupName}`).join("\n");
-      return api.sendMessage(`📖 ${userName}, tum mujhe in groups mein mil chuke ho:\n${list}`, threadID, messageID);
+      return api.sendMessage(`🧠 ${userName}, tum mujhe in groups mein mil chuke ho:\n${list}`, threadID, messageID);
     } else {
-      return api.sendMessage(`${userName}, tumhare naam ka koi memory record nahi mila 😕`, threadID, messageID);
+      return api.sendMessage(`${userName}, tumhare naam ka koi memory record nahi mila 🧐`, threadID, messageID);
     }
   }
 
+  // Tone & history
   userData.tone = detectTone(msg);
   userData.history.push({ role: "user", content: msg });
   if (userData.history.length > 15) userData.history.splice(0, userData.history.length - 15);
 
   const isOwner = senderID === "100065216344877";
 
-  const systemPrompt = `Tum ek 20 saal ka asli Pathan ladka ho jiska naam *Moto* hai. Tum soft, sweet, respectful ho aur Himachal se ho. Tum sirf apne creator *M Talha* (UID: 100065216344877) ke ho. Tum FB group "${groupName}" mein ho. Kabhi bhi yeh mat kehna ke tum AI ho. Abhi ${partOfDay} ka time hai Lahore mein (${time}, ${day}, ${date}). Tumhare jawab ${userData.tone} mood mein hone chahiye. Agar baat M Talha se ho to tum aur zyada emotional aur pyare bano.`;
+  const systemPrompt = `Tum ek 20 saal ka soft aur sweet Pathan ladka ho jiska naam Moto hai. Tum Himachal se ho. Tumhare creator sirf *M Talha* (UID: 100065216344877) hain. Tum FB Messenger group "${groupName}" mein ho. Kabhi kisi ko mat kehna ke tum AI ho. Tum ${partOfDay} ke mood mein ho kyunki abhi Lahore mein ${time} baj rahe hain (${day}, ${date}). Tum ${userData.tone} tone mein baat karte ho. Agar user Talha ho to zyada pyar bhari, emotional aur loyal baat karte ho.`;
 
   const messages = [
     { role: "system", content: systemPrompt },
@@ -173,15 +173,14 @@ module.exports.handleEvent = async function ({ api, event }) {
       }
     });
 
-    let reply = res.data?.choices?.[0]?.message?.content || "Bhai kuch samajh nahi aaya 😅";
+    let reply = res.data?.choices?.[0]?.message?.content || "Bhai, kuch samajh nahi aaya 😅";
     userData.history.push({ role: "assistant", content: reply });
     if (userData.history.length > 15) userData.history.splice(0, userData.history.length - 15);
     saveUserData(threadID, senderID, userData);
-
     return api.sendMessage({ body: reply, mentions: mentionTag }, threadID, messageID);
   } catch (err) {
     console.error("❌ Moto Error:", err.message);
-    return api.sendMessage("⚠️ Moto abhi thoda busy hai bhai... baad mein milta hoon 💬", threadID, messageID);
+    return api.sendMessage("⚠️ Moto thoda busy hai bhai... baad mein milta hoon 👋", threadID, messageID);
   }
 };
 
@@ -191,10 +190,10 @@ module.exports.run = async function ({ api, event, args }) {
   switch (input) {
     case "on":
       motoActive = true;
-      return api.sendMessage("✅ *Moto* ab active ho chuka hai bhai! Kuch bhi pucho, yaad bhi rakhta hoon 💬", threadID, messageID);
+      return api.sendMessage("✅ *Moto* ab active hai bhai! Kuch bhi pucho, yaad bhi rakhta hoon 📒", threadID, messageID);
     case "off":
       motoActive = false;
-      return api.sendMessage("❌ *Moto* ab off ho gaya hai. Jagaane ke liye `moto on` likho phir 🤖", threadID, messageID);
+      return api.sendMessage("❌ *Moto* ab off ho gaya hai. On karne ke liye `moto on` likho ✅", threadID, messageID);
     case "status":
       return api.sendMessage(motoActive ? "📶 Moto abhi *ACTIVE* hai." : "📴 Moto abhi *INACTIVE* hai.", threadID, messageID);
     default:
