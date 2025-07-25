@@ -1,461 +1,216 @@
 const axios = require("axios");
-const request = require("request");
 const fs = require("fs-extra");
+
+// ========== CONFIGURATION ========== //
+const BASE_API_URL = "https://your-new-api-domain.com/api/ephoto"; // CHANGE THIS TO YOUR API URL
 
 module.exports.config = {
   name: "ephoto",
   version: "11.0.0",
   hasPermssion: 0,
-  credits: `M_TALHA`,
+  credits: "M_TALHA",
   usePrefix: true,
-  description: "Make your own logo using ephoto",
+  description: "Create logos using ephoto API",
   commandCategory: "logo",
-  usages: "ephoto list or textpro list (page number) or textpro (logo) (text)",
-  cooldowns: 2,
+  usages: "ephoto list [page] | ephoto [type] [text]",
+  cooldowns: 2
 };
 
-module.exports.run = async function ({ api, event, args, Users }) {
-  let { messageID, senderID, threadID } = event;
+// ========== COMPLETE LOGO LIST DATA ========== //
+const LOGO_LISTS = {
+  1: `🖼️ Logo List - Page 1/3:
+1. television     11. typography     21. sunlight
+2. glass          12. leaves         22. pig
+3. blackpink      13. cloth          23. Halloween
+4. neonblacpink   14. graffiti       24. leafgrafy
+5. coverpubg      15. star           25. water
+6. greenbrush     16. typography2    26. animate
+7. blueneon       17. nightstars     27. puppy
+8. eraser         18. cloud          28. foggy
+9. dragonfire     19. papercut       29. flag
+10. bulb          20. horror         30. arrow`,
 
-  if (args.length >= 2 && args[0].toLowerCase() === "list") {
-    let page = parseInt(args[1]);
-    switch (page) {
-      case 1:
-        return api.sendMessage(
-          `here's the logo list - Page 1:\n1. television\n2. glass\n3. blackpink\n4. neonblacpink\n5. coverpubg\n6. greenbrush\n7. blueneon\n8. eraser\n9. dragonfire\n10. bulb\n11. typography\n12. leaves\n13. cloth\n14. graffiti\n15. star\n16. typography2\n17. nightstars\n18. cloud\n19. papercut\n20. horror\n21. sunlight\n22. pig\n23. Halloween\n24. leafgrafy\n25. water\n26. animate\n27. puppy\n28. foggy\n29. flag\n30. arrow\n\nPAGE 1 - 3`,
-          threadID,
-          messageID
-        );
-      case 2:
-        return api.sendMessage(
-          `Logo list - Page 2:\n31. arrow2\n32. hacker\n33. avatar\n34. moblegend\n35. warface\n36. foggy2\n37. gammergirl\n38. teamlogo\n39. beach\n40. neonstyle\n41. gaminglogo\n42. game\n43. vibrant\n44. blueneon\n45. steelmetal\n46. mascot\n47. luxurylogo\n48. star\n50. minimal\n51. galaxy\n52. goldavatar\n53. team2\n54. shield\n55. angel\n56. queen\n57. gaminglogo2\n58. zodiac\n59. steel2\n60. pubg2\n61. pubg3\n\nPAGE 2 - 3`,
-          threadID,
-          messageID
-        );
-      case 3:
-        return api.sendMessage(
-          `Logo list - Page 3:\n62. fbcover\n63. fbcover2\n64. fbcover3\n65. fbcover4\n66. fbcover5\n67. fbcover6\n68. fbcover7\n69. fbcover8\n70. tattoo\n71. moblegend2\n72. neonstyle2\n73. arena\n74. lovecard\n75. lovecard2\n76. lovecard3\n77. heartwing\n78. cake\n79. cake2\n80. cake3\n81. cake4\n82. cake5\n83. cake6\n84. cake7\n85. cup\n86. flaming\n87. blood\n88. blood2\n89. crossfire\n90. freefire\n91. overwatch\n92. lolavata\n93. dota\n94. exposure`,
-          threadID,
-          messageID
-        );
-      default:
-        return api.sendMessage(
-          `Invalid page number! Please use "list 1" or "list 2" or "list 3 in the total of list there are 100 Ephoto logo for now.".`,
-          threadID,
-          messageID
-        );
-    }
-  }
+  2: `🖼️ Logo List - Page 2/3:
+31. arrow2        41. gaminglogo     51. galaxy
+32. hacker        42. game           52. goldavatar
+33. avatar        43. vibrant        53. team2
+34. moblegend     44. blueneon       54. shield
+35. warface       45. steelmetal     55. angel
+36. foggy2        46. mascot         56. queen
+37. gammergirl    47. luxurylogo     57. gaminglogo2
+38. teamlogo      48. star           58. zodiac
+39. beach         49. minimal        59. steel2
+40. neonstyle     50. team2          60. pubg2`,
 
-  if (args.length < 2) {
+  3: `🖼️ Logo List - Page 3/3:
+61. pubg3         71. moblegend2     81. cake5
+62. fbcover       72. neonstyle2     82. cake6
+63. fbcover2      73. arena          83. cake7
+64. fbcover3      74. lovecard       84. cup
+65. fbcover4      75. lovecard2      85. flaming
+66. fbcover5      76. lovecard3      86. blood
+67. fbcover6      77. heartwing      87. blood2
+68. fbcover7      78. cake           88. crossfire
+69. fbcover8      79. cake2          89. freefire
+70. tattoo        80. cake3          90. overwatch`
+};
+
+// ========== COMPLETE LOGO CONFIGURATIONS ========== //
+const LOGO_CONFIGS = {
+  // Page 1 Logos
+  television: { endpoint: "/television", message: "📺 Television Logo" },
+  glass: { endpoint: "/glasses", message: "👓 Glass Effect Logo" },
+  blackpink: { endpoint: "/blackpink", message: "🖤 Blackpink Style Logo" },
+  neonblacpink: { endpoint: "/neonbp", message: "💖 Neon Blackpink Logo" },
+  coverpubg: { endpoint: "/coverpubg", message: "🎮 PUBG Cover Logo" },
+  greenbrush: { endpoint: "/greenbrush", message: "🖌️ Green Brush Logo" },
+  blueneon: { endpoint: "/neonblue", message: "🔵 Blue Neon Logo" },
+  eraser: { endpoint: "/eraser", message: "✏️ Eraser Effect Logo" },
+  dragonfire: { endpoint: "/dragonfire", message: "🐉 Dragon Fire Logo" },
+  bulb: { endpoint: "/incandescent", message: "💡 Light Bulb Logo" },
+  typography: { endpoint: "/typography", message: "🔠 Typography Logo" },
+  leaves: { endpoint: "/letters", message: "🍃 Leaves Letters Logo" },
+  cloth: { endpoint: "/cloth", message: "👕 Cloth Texture Logo" },
+  graffiti: { endpoint: "/graffiti", message: "🎨 Graffiti Style Logo" },
+  star: { endpoint: "/metals", message: "⭐ Metal Star Logo" },
+  typography2: { endpoint: "/typography2", message: "🔡 Typography 2 Logo" },
+  nightstars: { endpoint: "/nightstars", message: "🌃 Night Stars Logo" },
+  cloud: { endpoint: "/cloud", message: "☁️ Cloud Style Logo" },
+  papercut: { endpoint: "/caper", message: "✂️ Paper Cut Logo" },
+  horror: { endpoint: "/horror", message: "👻 Horror Style Logo" },
+  sunlight: { endpoint: "/sunlight", message: "☀️ Sunlight Effect Logo" },
+  pig: { endpoint: "/pig", message: "🐷 Pig Character Logo" },
+  halloween: { endpoint: "/hallowen", message: "🎃 Halloween Logo" },
+  leafgrafy: { endpoint: "/leafgraphy", message: "🌿 Leafography Logo" },
+  water: { endpoint: "/water", message: "💧 Water Effect Logo" },
+  animate: { endpoint: "/crank", message: "🌀 Animated Style Logo" },
+  puppy: { endpoint: "/puppy", message: "🐶 Puppy Logo" },
+  foggy: { endpoint: "/foggy", message: "🌫️ Foggy Effect Logo" },
+  flag: { endpoint: "/american", message: "🇺🇸 Flag Logo" },
+  arrow: { endpoint: "/arrow", message: "➡️ Arrow Logo" },
+
+  // Page 2 Logos
+  arrow2: { endpoint: "/arrow2", message: "⏩ Arrow 2 Logo" },
+  hacker: { endpoint: "/anonymous", message: "👨💻 Hacker Style Logo" },
+  avatar: { endpoint: "/aov", message: "👤 Avatar Logo" },
+  moblegend: { endpoint: "/ml", message: "⚔️ Mobile Legends Logo" },
+  warface: { endpoint: "/warface", message: "🔫 Warface Logo" },
+  foggy2: { endpoint: "/window", message: "🪟 Foggy Window Logo" },
+  gammergirl: { endpoint: "/gamergirl", message: "👧 Gamer Girl Logo" },
+  teamlogo: { endpoint: "/teamlogo", message: "🏆 Team Logo" },
+  beach: { endpoint: "/beach", message: "🏖️ Beach Style Logo" },
+  neonstyle: { endpoint: "/neonstyle", message: "💈 Neon Style Logo" },
+  gaminglogo: { endpoint: "/gaminglogo", message: "🎮 Gaming Logo" },
+  game: { endpoint: "/fpsgame", message: "🕹️ Game Logo" },
+  vibrant: { endpoint: "/vibrant", message: "🌈 Vibrant Color Logo" },
+  steelmetal: { endpoint: "/steelmetal", message: "🔩 Steel Metal Logo" },
+  mascot: { endpoint: "/circlemascot", message: "👾 Mascot Logo" },
+  luxurylogo: { endpoint: "/luxuarylogo", message: "💎 Luxury Logo" },
+  minimal: { endpoint: "/minimal", message: "➖ Minimalist Logo" },
+  galaxy: { endpoint: "/galaxy", message: "🌌 Galaxy Logo" },
+  goldavatar: { endpoint: "/goldavatar", message: "💰 Gold Avatar Logo" },
+  team2: { endpoint: "/team2", message: "👥 Team 2 Logo" },
+  shield: { endpoint: "/sheild", message: "🛡️ Shield Logo" },
+  angel: { endpoint: "/angel2", message: "👼 Angel Logo" },
+  queen: { endpoint: "/queen", message: "👑 Queen Logo" },
+  gaminglogo2: { endpoint: "/gaminglogo2", message: "🎮 Gaming Logo 2" },
+  zodiac: { endpoint: "/zodiac", message: "♈ Zodiac Logo" },
+  steel2: { endpoint: "/steel2", message: "⚙️ Steel 2 Logo" },
+  pubg2: { endpoint: "/pubg2", message: "🎯 PUBG 2 Logo" },
+  pubg3: { endpoint: "/pubg3", message: "🔫 PUBG 3 Logo" },
+
+  // Page 3 Logos
+  fbcover: { endpoint: "/facebookcover4", message: "📘 Facebook Cover" },
+  fbcover2: { endpoint: "/facebookcover5", message: "📗 Facebook Cover 2" },
+  fbcover3: { endpoint: "/facebookcover6", message: "📕 Facebook Cover 3" },
+  fbcover4: { endpoint: "/facebookcover7", message: "📓 Facebook Cover 4" },
+  fbcover5: { endpoint: "/facebookcover8", message: "📔 Facebook Cover 5" },
+  fbcover6: { endpoint: "/facebookcover9", message: "📒 Facebook Cover 6" },
+  fbcover7: { endpoint: "/facebookcover11", message: "📙 Facebook Cover 7" },
+  fbcover8: { endpoint: "/facebookcover12", message: "📚 Facebook Cover 8" },
+  tattoo: { endpoint: "/tatto", message: "💉 Tattoo Style Logo" },
+  moblegend2: { endpoint: "/ml2", message: "🗡️ Mobile Legends 2 Logo" },
+  neonstyle2: { endpoint: "/neonstyle", message: "🔮 Neon Style 2 Logo" },
+  arena: { endpoint: "/arena", message: "🏟️ Arena Logo" },
+  lovecard: { endpoint: "/lovecard2", message: "💌 Love Card" },
+  lovecard2: { endpoint: "/lovecard3", message: "💝 Love Card 2" },
+  lovecard3: { endpoint: "/lovecard4", message: "💘 Love Card 3" },
+  heartwing: { endpoint: "/winggif", message: "💞 Heart Wings Logo" },
+  cake: { endpoint: "/cake2", message: "🎂 Cake Logo" },
+  cake2: { endpoint: "/cake3", message: "🍰 Cake 2 Logo" },
+  cake3: { endpoint: "/cake4", message: "🧁 Cake 3 Logo" },
+  cake4: { endpoint: "/cake5", message: "🥮 Cake 4 Logo" },
+  cake5: { endpoint: "/cake6", message: "🍥 Cake 5 Logo" },
+  cake6: { endpoint: "/cake7", message: "🍬 Cake 6 Logo" },
+  cup: { endpoint: "/cup", message: "🏆 Cup Logo" },
+  flaming: { endpoint: "/flaming", message: "🔥 Flaming Text Logo" },
+  blood: { endpoint: "/blood", message: "🩸 Blood Effect Logo" },
+  blood2: { endpoint: "/blood2", message: "💉 Blood 2 Logo" },
+  crossfire: { endpoint: "/crossfire", message: "🔫 Crossfire Logo" },
+  freefire: { endpoint: "/freefire3", message: "🎯 Free Fire Logo" },
+  overwatch: { endpoint: "/overwatch2", message: "👁️ Overwatch Logo" }
+};
+
+// ========== MAIN FUNCTION ========== //
+module.exports.run = async function ({ api, event, args }) {
+  const { messageID, threadID } = event;
+
+  // Handle list command
+  if (args[0]?.toLowerCase() === "list") {
+    const page = parseInt(args[1]) || 1;
     return api.sendMessage(
-      `Invalid command format! Use: Ephoto list or Ephoto list (page number) or Ephoto (logo) (text)`,
+      LOGO_LISTS[page] || "❌ Invalid page! Please use 1, 2 or 3",
       threadID,
       messageID
     );
   }
 
-  let type = args[0].toLowerCase();
-  let name = args.slice(1).join(" ");
-  let pathImg = __dirname + `/cache/${type}_${name}.png`;
-  let apiUrl, message;
-
-  switch (type) {
-    case "television":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/television?text=${name}`;
-      message = "here's the [TELEVISION] Logo created:";
-      break;
-    case "glass":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/glasses?text=${name}`;
-      message = "here's the [ GLASS ] Logo created:";
-      break;
-    case "blackpink":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/blackpink?text=${name}`;
-      message = "here's the [ BACKPINK ] Logo created:";
-      break;
-    case "neonblacpink":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/neonbp?text=${name}`;
-      message = "here's the [ NEON BLACK PINK] Logo Created:";
-      break;
-    case "coverpubg":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/coverpubg?text=${name}`;
-      message = "here's the [ COVER PUBG ] - Logo Created:";
-      break;
-    case "greenbrush":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/greenbrush?text=${name}`;
-      message = "here's the [ GREENBRUSH ] Logo Created:";
-      break;
-    case "blueneon":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/neonblue?text=${name}`;
-      message = "here's the [ BLUE NEON ] Logo created:";
-      break;
-    case "eraser":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/eraser?text=${name}`;
-      message = "here's the [ ERASER ] Logo created:";
-      break;
-    case "dragonfire":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/dragonfire?text=${name}`;
-      message = "here's the [ DRAGON FIRE ] Logo created:";
-      break;
-    case "bulb":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/incandescent?text=${name}`;
-      message = "here's the [ BULB ] Logo created:";
-      break;
-    case "typography":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/typography?text=${name}`;
-      message = "here's the [ TYPOGRAPHY ] Logo created:";
-      break;
-    case "leaves":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/letters?text=${name}`;
-      message = "here's the [ LEAVES ] Logo created:";
-      break;
-    case "cloth":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cloth?text=${name}`;
-      message = "here's the [ CLOTH ] Logo created:";
-      break;
-    case "graffiti":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/graffiti?text=${name}`;
-      message = "here's the [ GRAFFITI ] Logo created:";
-      break;
-    case "star":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/metals?text=${name}`;
-      message = "here's the [ STAR ] Logo created:";
-      break;
-    case "typography2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/typography2?text=${name}`;
-      message = "here's the [ TYPOGRAPHY 2 ] Logo created:";
-      break;
-    case "nightstars":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/nightstars?text=${name}`;
-      message = "here's the [ NIGHT STARS ] Logo created:";
-      break;
-    case "cloud":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cloud?text=${name}`;
-      message = "here's the [ CLOUD ] Logo created:";
-      break;
-    case "papercut":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/caper?text=${name}`;
-      message = "here's the [ CUT PAPER ] Logo created:";
-      break;
-    case "horror":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/horror?text=${name}`;
-      message = "here's the [ HORROR ] Logo created:";
-      break;
-    case "sunlight":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/sunlight?text=${name}`;
-      message = "here's the [ sunlight ] Logo created:";
-      break;
-    case "pig":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/pig?text=${name}`;
-      message = "here's the [ PIG ] Logo created:";
-      break;
-    case "Halloween":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/hallowen?text=${name}`;
-      message = "here's the [ HALLOWEEN ] Logo created:";
-      break;
-    case "leafgrafy":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/leafgraphy?text=${name}`;
-      message = "here's the [ LEAFGRAFY ] Logo created:";
-      break;
-    case "water":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/water?text=${name}`;
-      message = "here's the [ WATER ] Logo created:";
-      break;
-    case "animate":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/crank?text=${name}`;
-      message = "here's the [ ANIMATE ] Logo created:";
-      break;
-    case "puppy":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/puppy?text=${name}`;
-      message = "here's the [ PUPPY ] Logo created:";
-      break;
-    case "foggy":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/foggy?text=${name}`;
-      message = "here's the [ FOGGY ] Logo created:";
-      break;
-    case "flag":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/american?text=${name}`;
-      message = "here's the [ FLAG ] Logo created:";
-      break;
-    case "arrow":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/arrow?text=${name}`;
-      message = "here's the [ ARROW ] Logo created:";
-      break;
-    case "arrow2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/arrow2?text=${name}`;
-      message = "here's the [ ARROW 2 ] Logo created:";
-      break;
-    case "hacker":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/anonymous?text=${name}`;
-      message = "here's the [ HACKER ] Logo created:";
-      break;
-    case "avatar":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/aov?text=${name}`;
-      message = "here's the [ AVATAR ] Logo created:";
-      break;
-    case "moblegend":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/ml?text=${name}`;
-      message = "here's the [ MOB LEGEND ] Logo created:";
-      break;
-    case "warface":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/warface?text=${name}`;
-      message = "here's the [ WARFACE ] Logo created:";
-      break;
-    case "foggy2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/window?text=${name}`;
-      message = "here's the [ FOGGY 2 ] Logo created:";
-      break;
-    case "gammergirl":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/gamergirl?text=${name}`;
-      message = "here's the [ GAMMERGIRL ] Logo created:";
-      break;
-    case "teamlogo":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/teamlogo?text=${name}`;
-      message = "here's the [ TEAMLOGO ] Logo created:";
-      break;
-    case "beach":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/beach?text=${name}`;
-      message = "here's the [ BEACH ] Logo created:";
-      break;
-    case "neonstyle":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/neonstyle?text=${name}`;
-      message = "here's the [ NEON STYLE ] Logo created:";
-      break;
-    case "gaminglogo":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/gaminglogo?text=${name}`;
-      message = "here's the [ GAMING LOGO ] Logo created:";
-      break;
-    case "game":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/fpsgame?text=${name}`;
-      message = "here's the [ GAME ] Logo created:";
-      break;
-    case "vibrant":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/vibrant?text=${name}`;
-      message = "here's the [ VIBRANT ] Logo created:";
-      break;
-    case "blueneon":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/blueneon2?text=FAHEEM${name}`;
-      message = "here's the [ BLUE NEON ] Logo created:";
-      break;
-    case "steelmetal":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/steelmetal?text=${name}`;
-      message = "here's the [ STEELMETAL ] Logo created:";
-      break;
-    case "mascot":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/circlemascot?text=${name}`;
-      message = "here's the [ MASCOT ] Logo created:";
-      break;
-    case "luxurylogo":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/luxuarylogo?text=${name}`;
-      message = "here's the [ LUXURY LOGO ] Logo created:";
-      break;
-    case "star":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/printname?text=${name}`;
-      message = "here's the [ STAR ] Logo created:";
-      break;
-    case "minimal":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/minimal?text=${name}`;
-      message = "here's the [ MINIMAL ] Logo created:";
-      break;
-    case "galaxy":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/galaxy?text=${name}`;
-      message = "here's the [ GALAXY ] Logo created:";
-      break;
-    case "goldavatar":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/goldavatar?text=${name}`;
-      message = "here's the [ GOLD AVATAR ] Logo created:";
-      break;
-    case "cloth":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cloth?text=${name}`;
-      message = "here's the [ CLOTH ] Logo created:";
-      break;
-    case "team2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/team2?text=${name}`;
-      message = "here's the [ TEAM 2 ] Logo created:";
-      break;
-    case "shield":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/sheild?text=${name}`;
-      message = "here's the [ SHIELD ] Logo created:";
-      break;
-    case "angel":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/angel2?text=${name}`;
-      message = "here's the [ ANGEL ] Logo created:";
-      break;
-    case "queen":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/queen?text=${name}`;
-      message = "here's the [ QUEEN ] Logo created:";
-      break;
-    case "gaminglogo2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/gaminglogo2?text=${name}`;
-      message = "here's the [ GAMING LOGO 2 ] Logo created:";
-      break;
-    case "zodiac":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/zodiac?text=${name}`;
-      message = "here's the [ ZODIAC ] Logo created:";
-      break;
-    case "steel2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/steel2?text=${name}`;
-      message = "here's the [ STEEL 2 ] Logo created:";
-      break;
-    case "pubg2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/pubg2?text=${name}`;
-      message = "here's the [ PUBG 2 ] Logo created:";
-      break;
-    case "pubg3":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/pubg3?text=${name}`;
-      message = "here's the [ PUBG 3 ] Logo created:";
-      break;
-    case "fbcover":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/facebookcover4?text=${name}`;
-      message = "here's the [ FBCOVER ] Logo created:";
-      break;
-    case "fbcover2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/facebookcover5?text=${name}`;
-      message = "here's the [ FBCOVER 2 ] Logo created:";
-      break;
-    case "fbcover3":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/facebookcover6?text=${name}`;
-      message = "here's the [ FBCOVER 3 ] Logo created:";
-      break;
-    case "fbcover4":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/facebookcover7?text=${name}`;
-      message = "here's the [ FBCOVER 4 ] Logo created:";
-      break;
-    case "fbcover5":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/facebookcover8?text=${name}`;
-      message = "here's the [ FBCOVER 5 ] Logo created:";
-      break;
-    case "fbcover6":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/facebookcover9?text=${name}`;
-      message = "here's the [ FBCOVER 6 ] Logo created:";
-      break;
-    case "fbcover7":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/facebookcover11?text=${name}`;
-      message = "here's the [ FBCOVER 7 ] Logo created:";
-      break;
-    case "fbcover8":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/facebookcover12?text=${name}`;
-      message = "here's the [ FBCOVER 8 ] Logo created:";
-      break;
-    case "tattoo":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/tatto?text=${name}`;
-      message = "here's the [ TATTOO ] Logo created:";
-      break;
-    case "moblegend2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/ml2?text=${name}`;
-      message = "here's the [ MOB LEGEND 2 ] Logo created:";
-      break;
-    case "neonstyle2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/neonstyle?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ NEONSTYLE 2 ] Logo created:";
-      break;
-    case "arena":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/arena?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ ARENA ] Logo created:";
-      break;
-    case "lovecard":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/lovecard2?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ LOVE CARD ] Logo created:";
-      break;
-    case "lovecard2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/lovecard3?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ LOVE CARD 2 ] Logo created:";
-      break;
-    case "lovecard3":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/lovecard4?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ LOVE CARD 3 ] Logo created:";
-      break;
-    case "heartwing":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/winggif?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ HEART WING ] Logo created:";
-      break;
-    case "cake":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cake2?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ CAKE ] Logo created:";
-      break;
-    case "cake2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cake3?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ CAKE 2 ] Logo created:";
-      break;
-    case "cake3":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cake4?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ CAKE 3 ] Logo created:";
-      break;
-    case "cake4":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cake5?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ CAKE 4 ] Logo created:";
-      break;
-    case "cake5":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cake6?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ CAKE 5 ] Logo created:";
-      break;
-    case "cake6":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cake7?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ CAKE 6 ] Logo created:";
-      break;
-    case "cup":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/cup?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ CUP ] Logo created:";
-      break;
-    case "flaming":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/flaming?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ FLAMING ] Logo created:";
-      break;
-    case "blood":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/blood?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ BLOOD ] Logo created:";
-      break;
-    case "blood2":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/blood2?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ BLOOD 2 ] Logo created:";
-      break;
-    case "crossfire":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/crossfire?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's [ CROSSFIRE ] Logo created:";
-      break;
-    case "freefire":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/freefire3?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ FREEFIRE ] Logo created:";
-      break;
-    case "overwatch":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/overwatch2?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ OVER WATCH ] Logo created:";
-      break;
-    case "lolavatar":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/lolnew?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ LOL AVATAR ] Logo created:";
-      break;
-    case "dota":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/dota?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ DOTA ] Logo created:";
-      break;
-    case "exposure":
-      apiUrl = `https://html-all-nnhdi.run-us-west2.goorm.site/api/ephoto/doubleexpouser?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ EXPOSURE ] Logo created:";
-      break;
-    default:
-      return api.sendMessage(
-        `Invalid logo type! Use .Ephoto list 1 to see the list of Ephoto logos.`,
-        threadID,
-        messageID
-      );
+  // Validate command
+  if (args.length < 2) {
+    return api.sendMessage(
+      `🛠️ Usage:\n• ephoto list [page]\n• ephoto [type] [text]\n\nExample: ephoto glitch Hello World`,
+      threadID,
+      messageID
+    );
   }
 
-  api.sendMessage(
-    "Processing your Ephoto logo, please wait...",
-    threadID,
-    messageID
-  );
-  let response = await axios.get(apiUrl, { responseType: "arraybuffer" });
-  let logo = response.data;
-  fs.writeFileSync(pathImg, Buffer.from(logo, "utf-8"));
-  return api.sendMessage(
-    {
-      body: message,
-      attachment: fs.createReadStream(pathImg),
-    },
-    threadID,
-    () => fs.unlinkSync(pathImg),
-    messageID
-  );
+  const [type, ...nameArr] = args;
+  const name = nameArr.join(" ");
+  const pathImg = __dirname + `/cache/${type}_${name}.png`;
+
+  // Get logo configuration
+  const config = LOGO_CONFIGS[type.toLowerCase()];
+  if (!config) {
+    return api.sendMessage(
+      `❌ Invalid logo type! Use "ephoto list" to see available logos.`,
+      threadID,
+      messageID
+    );
+  }
+
+  try {
+    api.sendMessage("🔄 Creating your logo, please wait...", threadID, messageID);
+
+    const apiUrl = `${BASE_API_URL}${config.endpoint}?text=${encodeURIComponent(name)}`;
+    const response = await axios.get(apiUrl, { responseType: "arraybuffer" });
+    
+    fs.writeFileSync(pathImg, Buffer.from(response.data));
+    
+    await api.sendMessage(
+      { 
+        body: `✅ ${config.message}\n📝 Text: ${name}`,
+        attachment: fs.createReadStream(pathImg) 
+      },
+      threadID
+    );
+
+    fs.unlinkSync(pathImg);
+  } catch (error) {
+    console.error("Logo Creation Error:", error);
+    api.sendMessage(
+      "❌ Error creating logo. The API might be down or your text is too long.",
+      threadID,
+      messageID
+    );
+  }
 };
