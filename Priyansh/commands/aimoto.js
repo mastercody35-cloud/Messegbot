@@ -1,79 +1,74 @@
 const axios = require("axios");
 const fs = require("fs-extra");
-
-const statusPath = __dirname + "/moto_status.json";
+const gTTS = require("gtts");
+const path = require("path");
 
 module.exports.config = {
   name: "moto",
-  version: "1.0",
+  version: "2.0",
   hasPermssion: 0,
   credits: "Talha Pathan",
-  description: "GPT-4o AI using RapidAPI with on/off toggle",
+  description: "AI + Voice Urdu Reply using GPT",
   commandCategory: "AI",
-  usages: "[prompt]",
-  cooldowns: 3,
+  usages: "moto on <text>",
+  cooldowns: 3
 };
 
 module.exports.run = async function ({ api, event, args }) {
   const { threadID, messageID, senderID } = event;
-  const input = args.join(" ").toLowerCase();
 
-  // ✅ Create status file if not exist
-  if (!fs.existsSync(statusPath)) fs.writeFileSync(statusPath, JSON.stringify({}));
+  if (!args[0]) return api.sendMessage("💡 Use: moto on <your message>\nExample: moto on tum kon ho?", threadID, messageID);
 
-  let status = JSON.parse(fs.readFileSync(statusPath));
+  const input = args.join(" ");
+  const uid = senderID;
+  const fileName = path.join(__dirname, `/cache/moto-${uid}.mp3`);
 
-  // ✅ Handle ON/OFF Commands
-  if (input === "moto on") {
-    status[threadID] = true;
-    fs.writeFileSync(statusPath, JSON.stringify(status, null, 2));
-    return api.sendMessage("🤖 Moto AI is now ON. Ask me anything!", threadID, messageID);
+  // OFF MODE
+  if (input.toLowerCase().startsWith("off") || input.toLowerCase() === "mofo off") {
+    return api.sendMessage(`😒 Moto off kar diya gaya hai, Talha bhai ke hukum pe!`, threadID, messageID);
   }
 
-  if (input === "moto off") {
-    status[threadID] = false;
-    fs.writeFileSync(statusPath, JSON.stringify(status, null, 2));
-    return api.sendMessage("🛑 Moto AI is now OFF.", threadID, messageID);
-  }
+  // ON MODE: AI GPT + Voice
+  const userMessage = input.replace(/^on/i, "").trim();
+  if (!userMessage) return api.sendMessage("❓ Kuch to likho moto ko reply dene ke liye!", threadID, messageID);
 
-  if (!status[threadID]) return; // If off, do nothing
-
-  // ✅ Moto AI Active – Handle GPT-4o reply
-  const prompt = args.join(" ");
-  if (!prompt) return api.sendMessage("❗ Sawal to pocho Moto se!", threadID, messageID);
+  api.sendMessage("⏳ Moto soch raha hai...", threadID);
 
   try {
-    // 💬 Special Case: Who made you?
-    const lowerPrompt = prompt.toLowerCase();
-    if (["tumhy kis ny bnaya", "tumhe kisne banaya", "creator", "owner"].some(q => lowerPrompt.includes(q))) {
-      return api.sendMessage("💖 Mujhe Talha bhai ne banaya hai. Mein sirf unka hoon. 😌", threadID, messageID);
-    }
-
-    // 🤖 GPT-4o API via RapidAPI
-    const res = await axios.post(
-      "https://cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com/v1/chat/completions",
+    const gptRes = await axios.post("https://cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com/v1/chat/completions",
       {
-        messages: [
-          { role: "user", content: prompt }
-        ],
+        messages: [{ role: "user", content: userMessage }],
         model: "gpt-4o",
-        max_tokens: 200,
-        temperature: 0.9
+        max_tokens: 100,
+        temperature: 0.8
       },
       {
         headers: {
-          "Content-Type": "application/json",
+          "content-type": "application/json",
           "x-rapidapi-host": "cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com",
           "x-rapidapi-key": "f3d8421651msh284326842a2b9fbp184c6cjsn5de97980a85a"
         }
-      }
-    );
+      });
 
-    const reply = res.data.choices[0].message.content;
-    api.sendMessage("🧠 Moto: " + reply.trim(), threadID, messageID);
+    const aiReply = gptRes.data.choices[0].message.content;
+    const finalReply = `💬 Moto:\n${aiReply}`;
+
+    // Convert to Voice (Hindi/Urdu feel)
+    const gtts = new gTTS(aiReply, "hi");
+    await new Promise((resolve, reject) => {
+      gtts.save(fileName, err => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Send voice + message
+    await api.sendMessage({ body: finalReply, attachment: fs.createReadStream(fileName) }, threadID, () => {
+      fs.unlinkSync(fileName); // delete temp file
+    }, messageID);
 
   } catch (err) {
-    console.error("Moto Error:", err.response?.data || err.message);
-    api.sendMessage("❌ Moto AI error: " + (err.response?.data?.message || err.message), threadID);
+    console.error(err);
+    return api.sendMessage("❌ Moto reply failed. API key sahi hai kya?", threadID, messageID);
   }
 };
