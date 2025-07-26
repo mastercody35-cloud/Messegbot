@@ -71,7 +71,7 @@ module.exports.run = async function ({ api, event, args, Users }) {
       break;
     case "blackpink":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/blackpink?text=${name}`;
-      message = "here's the [ BACKPINK ] Logo created:";
+      message = "here's the [ BLACKPINK ] Logo created:";
       break;
     case "neonblacpink":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/neonbp?text=${name}`;
@@ -98,7 +98,7 @@ module.exports.run = async function ({ api, event, args, Users }) {
       message = "here's the [ DRAGON FIRE ] Logo created:";
       break;
     case "bulb":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/incandescent?text${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/incandescent?text=${name}`;
       message = "here's the [ BULB ] Logo created:";
       break;
     case "typography":
@@ -149,7 +149,7 @@ module.exports.run = async function ({ api, event, args, Users }) {
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/cake?text=${name}`;
       message = "here's the [ PIG ] Logo created:";
       break;
-    case "Halloween":
+    case "halloween":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/hallowen?text=${name}`;
       message = "here's the [ HALLOWEEN ] Logo created:";
       break;
@@ -161,10 +161,6 @@ module.exports.run = async function ({ api, event, args, Users }) {
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/water?text=${name}`;
       message = "here's the [ WATER ] Logo created:";
       break;
-    case "sunlight":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/sunlight?text=${name}`;
-      message = "here's the [ SUNLIGHT ] Logo created:";
-      break;
     case "puppy":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/puppy?text=${name}`;
       message = "here's the [ PUPPY ] Logo created:";
@@ -174,11 +170,11 @@ module.exports.run = async function ({ api, event, args, Users }) {
       message = "here's the [ FOGGY ] Logo created:";
       break;
     case "heartfire":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/heart?url=https://telegra.ph/file/dec30559fdc855288237d.jpg${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/heart?url=https://telegra.ph/file/dec30559fdc855288237d.jpg&text=${name}`;
       message = "here's the [ HEART FIRE] Logo created:";
       break;
     case "fireanimated":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/fire?url=https://telegra.ph/file/dec30559fdc855288237d.jpg${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/fire?url=https://telegra.ph/file/dec30559fdc855288237d.jpg&text=${name}`;
       message = "here's the [ FIRE ANIMATED ] Logo created:";
       break;
     case "arrow2":
@@ -226,7 +222,7 @@ module.exports.run = async function ({ api, event, args, Users }) {
       message = "here's the [ GAMING ] Logo created:";
       break;
     case "wing":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/winggif?text=&url=https://i.imgur.com/BTPUTRQ.jpg${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/winggif?text=${name}&url=https://i.imgur.com/BTPUTRQ.jpg`;
       message = "here's the [ WINGS ] Logo created:";
       break;
     case "lovecard":
@@ -265,10 +261,6 @@ module.exports.run = async function ({ api, event, args, Users }) {
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/goldavatar?text=${name}`;
       message = "here's the [ GOLD AVATAR ] Logo created:";
       break;
-    case "cloth":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/cloth?text=${name}`;
-      message = "here's the [ CLOTH ] Logo created:";
-      break;
     case "team2":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/team2?text=${name}`;
       message = "here's the [ TEAM 2 ] Logo created:";
@@ -280,10 +272,6 @@ module.exports.run = async function ({ api, event, args, Users }) {
     case "galaxy":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/galaxy?text=${name}`;
       message = "here's the [ GALAXY ] Logo created:";
-      break;
-    case "pig":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/steel2?text=${name}`;
-      message = "here's the [ PIG ] Logo created:";
       break;
     case "arena":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/arena?text=${name}`;
@@ -338,14 +326,14 @@ module.exports.run = async function ({ api, event, args, Users }) {
       message = "here's the [ FBCOVER 8 ] Logo created:";
       break;
     case "notebook":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/notebook?url=https://telegra.ph/file/dec30559fdc855288237d.jpg&text=&text2=Yout%20in%20the%20worM${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/notebook?url=https://telegra.ph/file/dec30559fdc855288237d.jpg&text=${name}&text2=Yout%20in%20the%20worM`;
       message = "here's the [ NOOT BOOK MUSIC  ] Logo created:";
       break;
     case "wanted":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/wposter?url=https://telegra.ph/file/dec30559fdc855288237d.jpg&text=&text2=ApM${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/wposter?url=https://telegra.ph/file/dec30559fdc855288237d.jpg&text=${name}&text2=ApM`;
       message = "here's the [ WANTED POSTER  ] Logo created:";
       break;
-    case " arrowtatto":
+    case "arrowtatto":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/arrow?text=${name}`;
       message = "here's the [ ARROW TATTOO ] Logo created:";
       break;
@@ -394,34 +382,26 @@ module.exports.run = async function ({ api, event, args, Users }) {
       message = "here's the [ CAKE 6 ] Logo created:";
       break;
     case "cup":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/cup?text=&url=https://i.imgur.com/BTPUTRQ.jpg${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/cup?text=${name}&url=https://i.imgur.com/BTPUTRQ.jpg`;
       message = "here's the [ CUP ] Logo created:";
       break;
     case "baloon":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/loveballon?url=https://i.imgur.com/BTPUTRQ.jpg&text=${name}`;
-      message = "here's the [ FLAMING ] Logo created:";
+      message = "here's the [ BALLOON ] Logo created:";
       break;
     case "city":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/cyberpunk?url=https://telegra.ph/file/dec30559fdc855288237d.jpg${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/cyberpunk?url=https://telegra.ph/file/dec30559fdc855288237d.jpg&text=${name}`;
       message = "here's the [  CYBER PUNK CITY ] Logo created:";
       break;
     case "wanted2":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/wanted2?text=&url=https://i.imgur.com/BTPUTRQ.png${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/wanted2?text=${name}&url=https://i.imgur.com/BTPUTRQ.png`;
       message = "here's the [ WANTED 2 ] Logo created:";
       break;
-    case "dragonfire"
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/dragonfire?text=${name}`;
-      message = "here's [ DRAGON FIRE ] Logo created:";
-      break;
-    case "blackpink":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/blackpink?text=${name}`;
-      message = "here's the [BLACK PINK  ] Logo created:";
-      break;
     case "sadmood":
-      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/sad?url=https://telegra.ph/file/dec30559fdc855288237d.jpg${name}`;
+      apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/sad?url=https://telegra.ph/file/dec30559fdc855288237d.jpg&text=${name}`;
       message = "here's the [ SAD MOOD  ] Logo created:";
       break;
-    case "love baloon ":
+    case "lovebaloon":
       apiUrl = `https://site--faaheem--hzpgqj8xq64k.code.run/api/ephoto/loveballon?text=${name}`;
       message = "here's the [ LOVE BALOON ] Logo created:";
       break;
@@ -446,16 +426,25 @@ module.exports.run = async function ({ api, event, args, Users }) {
     threadID,
     messageID
   );
-  let response = await axios.get(apiUrl, { responseType: "arraybuffer" });
-  let logo = response.data;
-  fs.writeFileSync(pathImg, Buffer.from(logo, "utf-8"));
-  return api.sendMessage(
-    {
-      body: message,
-      attachment: fs.createReadStream(pathImg),
-    },
-    threadID,
-    () => fs.unlinkSync(pathImg),
-    messageID
-  );
+  
+  try {
+    let response = await axios.get(apiUrl, { responseType: "arraybuffer" });
+    let logo = response.data;
+    fs.writeFileSync(pathImg, Buffer.from(logo, "utf-8"));
+    return api.sendMessage(
+      {
+        body: message,
+        attachment: fs.createReadStream(pathImg),
+      },
+      threadID,
+      () => fs.unlinkSync(pathImg),
+      messageID
+    );
+  } catch (error) {
+    return api.sendMessage(
+      `Error generating logo: ${error.message}`,
+      threadID,
+      messageID
+    );
+  }
 };
