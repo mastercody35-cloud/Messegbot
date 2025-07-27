@@ -1,13 +1,9 @@
-const fs = require("fs-extra");
-const axios = require("axios");
-const moment = require("moment-timezone");
-
 module.exports.config = {
   name: "info",
   version: "3.0",
   hasPermssion: 0,
-  credits: "Siizz | Enhanced by AI",
-  description: "Bot and Owner Information with Poetry",
+  credits: "Talha",
+  description: "info",
   commandCategory: "premium",
   cooldowns: 5,
   dependencies: {
@@ -18,27 +14,28 @@ module.exports.config = {
 };
 
 module.exports.run = async function({ api, event }) {
+  const fs = global.nodemodule["fs-extra"];
+  const axios = global.nodemodule["axios"];
+  const moment = require("moment-timezone");
+  
   // Uptime calculation
   const uptime = process.uptime();
   const days = Math.floor(uptime / 86400);
   const hours = Math.floor((uptime % 86400) / 3600);
   const minutes = Math.floor((uptime % 3600) / 60);
   const seconds = Math.floor(uptime % 60);
-
-  // Current time
+  
+  // Current time with beautiful formatting
   const timeNow = moment.tz("Asia/Lahore").format("dddd, MMMM Do YYYY | h:mm:ss A");
-
-  // Premium image
-  const premiumImages = [
-    "https://imgur.com/bVfAEoj.jpg"
-  ];
-  const selectedImage = premiumImages[Math.floor(Math.random() * premiumImages.length)];
-  const path = __dirname + "/cache/premium_info.jpg";
+  
+  // Using your direct Imgur link
+  const imageURL = "https://i.imgur.com/bVfAEoj.jpg"; 
+  const path = __dirname + "/cache/info_image.jpg";
 
   try {
-    const response = await axios.get(selectedImage, { responseType: "arraybuffer" });
-    fs.writeFileSync(path, Buffer.from(response.data, "binary"));
-
+    const { data } = await axios.get(imageURL, { responseType: "arraybuffer" });
+    fs.writeFileSync(path, Buffer.from(data, "binary"));
+    
     const poeticMessage = `
 ✧･ﾟ: *✧･ﾟ:* 𝗕𝗢𝗧 𝗖𝗥𝗬𝗦𝗧𝗔𝗟 𝗜𝗡𝗙𝗢 *:･ﾟ✧*:･ﾟ✧
 
@@ -46,13 +43,13 @@ module.exports.run = async function({ api, event }) {
     𝗕 𝗢 𝗧  𝗜 𝗡 𝗙 𝗢 
 ╚═════ ∘◦ ⛧ ◦∘ ═════╝
 
-❃ 𝗡𝗮𝗺𝗲: 『${global.config.BOTNAME || "MyBot"}』
-✧ 𝗣𝗿𝗲𝗳𝗶𝘅: 『 ${global.config.PREFIX || "*"} 』
+❃ 𝗡𝗮𝗺𝗲: 『${global.config.BOTNAME}』
+✧ 𝗣𝗿𝗲𝗳𝗶𝘅: 『 ${global.config.PREFIX} 』
 ❋ 𝗢𝘄𝗻𝗲𝗿: 『 𝖳𝖺𝗅𝗁𝖺 』
 ✺ 𝗖𝗼𝗻𝘁𝗮𝗰𝘁: 『 fb.com/talha 』
 
 ╔═════ ∘◦ ❈ ◦∘ ═════╗
-       𝗧 𝗔 𝗟 𝗛 𝗔  
+     𝗣 𝗢 𝗘 𝗧 𝗥 𝗬 
 ╚═════ ∘◦ ❈ ◦∘ ═════╝
 
 "𝗕𝗮𝗱𝗻𝗮𝗺 𝗛𝘂𝗺 𝗛𝗼 𝗧𝗼 𝗞𝘆𝗮 𝗛𝘂𝗮,
@@ -62,12 +59,12 @@ module.exports.run = async function({ api, event }) {
 𝗬𝗲 𝗗𝗶𝗹 𝗛𝗶 𝗠𝗲𝗿𝗮 𝗚𝗵𝗮𝗿 𝗛𝗮𝗶 𝗧𝘂𝗺𝗵𝗮𝗿𝗮"
 
 ╔═════ ∘◦ ✦ ◦∘ ═════╗
-    𝗦 𝗬 𝗦 𝗧 𝗘 𝗠 
+     𝗦 𝗬 𝗦 𝗧 𝗘 𝗠 
 ╚═════ ∘◦ ✦ ◦∘ ═════╝
 
 ⏳ 𝗨𝗽𝘁𝗶𝗺𝗲: ${days}d ${hours}h ${minutes}m ${seconds}s
 🗓️ 𝗗𝗮𝘁𝗲: ${timeNow}
-⚙️ 𝗩𝗲𝗿𝘀𝗶𝗼𝗻: ${global.config.version || "1.0.0"}
+⚙️ 𝗩𝗲𝗿𝘀𝗶𝗼𝗻: ${global.config.version}
 
 ╔═════ ∘◦ ✧ ◦∘ ═════╗
  𝗧 𝗘 𝗖 𝗛 𝗡 𝗢 𝗟 𝗢 𝗚 𝗬 
@@ -85,9 +82,9 @@ module.exports.run = async function({ api, event }) {
       body: poeticMessage,
       attachment: fs.createReadStream(path)
     }, event.threadID, () => fs.unlinkSync(path));
-
+    
   } catch (error) {
     console.error("Premium Info Error:", error);
-    return api.sendMessage("🚫 Error: Failed to load info. Try again later!", event.threadID);
+    return api.sendMessage("✨ 𝗔𝗻 𝗲𝗿𝗿𝗼𝗿 𝗼𝗰𝗰𝘂𝗿𝗿𝗲𝗱 𝘄𝗵𝗶𝗹𝗲 𝗴𝗲𝗻𝗲𝗿𝗮𝘁𝗶𝗻𝗴 𝘆𝗼𝘂𝗿 𝗽𝗿𝗲𝗺𝗶𝘂𝗺 𝗶𝗻𝗳𝗼𝗿𝗺𝗮𝘁𝗶𝗼𝗻.", event.threadID);
   }
 };
