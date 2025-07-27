@@ -1,61 +1,93 @@
+const fs = require("fs-extra");
+const axios = require("axios");
+const moment = require("moment-timezone");
+
 module.exports.config = {
-	name: "inf",
-	version: "1.0.1", 
-	hasPermssion: 0,
-	credits: "Siizz", //don't change the credits please
-	description: "Admin and Bot info.",
-	commandCategory: "...",
-	cooldowns: 1,
-	dependencies: 
-	{
-    "request":"",
-    "fs-extra":"",
-    "axios":""
+  name: "info",
+  version: "3.0",
+  hasPermssion: 0,
+  credits: "Siizz | Enhanced by AI",
+  description: "Bot and Owner Information with Poetry",
+  commandCategory: "premium",
+  cooldowns: 5,
+  dependencies: {
+    "axios": "",
+    "fs-extra": "",
+    "moment-timezone": ""
   }
 };
-module.exports.run = async function({ api,event,args,client,Users,Threads,__GLOBAL,Currencies }) {
-const axios = global.nodemodule["axios"];
-const request = global.nodemodule["request"];
-const fs = global.nodemodule["fs-extra"];
-const time = process.uptime(),
-		hours = Math.floor(time / (60 * 60)),
-		minutes = Math.floor((time % (60 * 60)) / 60),
-		seconds = Math.floor(time % 60);
-const moment = require("moment-timezone");
-var juswa = moment.tz("Asia/Lahore").format("『D/MM/YYYY』 【HH:mm:ss】");
-var link =                                     
-["https://imgur.com/bVfAEoj.jpg"];
-var callback = () => api.sendMessage({body:` ╔╬⓼★⓼╃────𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐓𝐈𝐎𝐍─𝄠━─Ⓔ⧐ ╰✾✾╀✿✿╀─━ↈⓇ⧐
 
-☄️•| 𝙱𝙾𝚃 𝙽𝙰𝙼𝙴 |•☄️  ${global.config.BOTNAME}
+module.exports.run = async function({ api, event }) {
+  // Uptime calculation
+  const uptime = process.uptime();
+  const days = Math.floor(uptime / 86400);
+  const hours = Math.floor((uptime % 86400) / 3600);
+  const minutes = Math.floor((uptime % 3600) / 60);
+  const seconds = Math.floor(uptime % 60);
 
-🥀𝐑𝐞𝐥𝐚𝐭𝐢𝐨𝐧𝐬𝐡𝐢𝐩 :- 𝐒𝐢𝐧𝐠𝐋𝐞
+  // Current time
+  const timeNow = moment.tz("Asia/Lahore").format("dddd, MMMM Do YYYY | h:mm:ss A");
 
-🙈𝗕𝗢𝗧 𝗢𝗪𝗡𝗘𝗥 𝗙𝗕 𝗜𝗗 𝗟𝗜𝗡𝗞🙈➪ 
+  // Premium image
+  const premiumImages = [
+    "https://imgur.com/bVfAEoj.jpg"
+  ];
+  const selectedImage = premiumImages[Math.floor(Math.random() * premiumImages.length)];
+  const path = __dirname + "/cache/premium_info.jpg";
 
-https://www.facebook.com/share/193GypVyJQ/🌸💯
+  try {
+    const response = await axios.get(selectedImage, { responseType: "arraybuffer" });
+    fs.writeFileSync(path, Buffer.from(response.data, "binary"));
 
-💋🦋_____________________🔥👑
-°
-                بََدناَمِ تَو بُہتِِ ہُ٘وں اسِِؔں زَمـاَنِِـے مََی٘ں 
-         تُو بَ٘تاََ تَیرِے سُنّنِے مَی٘ں کِِ٘ونَسؔاَ قِ٘ـصََـہ آیاَ ہََـ٘ے
-🍒🦋_____________________💋🍷
-✧══════•❁❀❁•══════✧
+    const poeticMessage = `
+✧･ﾟ: *✧･ﾟ:* 𝗕𝗢𝗧 𝗖𝗥𝗬𝗦𝗧𝗔𝗟 𝗜𝗡𝗙𝗢 *:･ﾟ✧*:･ﾟ✧
 
-🌸Bot Prefix🌸☞︎︎︎☜︎︎︎✰ ${global.config.PREFIX}
+╔═════ ∘◦ ⛧ ◦∘ ═════╗
+    𝗕 𝗢 𝗧  𝗜 𝗡 𝗙 𝗢 
+╚═════ ∘◦ ⛧ ◦∘ ═════╝
 
-♥️Bot Owner♥️ ★᭄𝗖𝗿𝗲𝗱𝗶𝘁𝘀 ༄𒁍≛⃝𝙏𝙖𝙡𝙃𝙖
+❃ 𝗡𝗮𝗺𝗲: 『${global.config.BOTNAME || "MyBot"}』
+✧ 𝗣𝗿𝗲𝗳𝗶𝘅: 『 ${global.config.PREFIX || "*"} 』
+❋ 𝗢𝘄𝗻𝗲𝗿: 『 𝖳𝖺𝗅𝗁𝖺 』
+✺ 𝗖𝗼𝗻𝘁𝗮𝗰𝘁: 『 fb.com/talha 』
 
-🥳UPTIME🥳
+╔═════ ∘◦ ❈ ◦∘ ═════╗
+       𝗧 𝗔 𝗟 𝗛 𝗔  
+╚═════ ∘◦ ❈ ◦∘ ═════╝
 
-🌪️Today is🌪️ ☞︎︎︎☜︎︎︎✰ ${juswa} 
+"𝗕𝗮𝗱𝗻𝗮𝗺 𝗛𝘂𝗺 𝗛𝗼 𝗧𝗼 𝗞𝘆𝗮 𝗛𝘂𝗮,
+𝗜𝘀𝗵𝗾 𝗞𝗶 𝗥𝗮𝗵 𝗠𝗲𝗶𝗻 𝗦𝗮𝗯 𝗕𝗮𝗱𝗻𝗮𝗺 𝗛𝗼𝘁𝗲 𝗛𝗮𝗶𝗻"
 
-⚡Bot is running⚡ ${hours}:${minutes}:${seconds}.
+"𝗧𝘂𝗺 𝗠𝘂𝗷𝗵𝗺𝗲𝗶𝗻 𝗗𝗵𝘂𝗻𝗱𝗼 𝗧𝗼 𝗣𝗮 𝗝𝗮𝗼𝗴𝗲,
+𝗬𝗲 𝗗𝗶𝗹 𝗛𝗶 𝗠𝗲𝗿𝗮 𝗚𝗵𝗮𝗿 𝗛𝗮𝗶 𝗧𝘂𝗺𝗵𝗮𝗿𝗮"
 
-🦢🍒•••ꞪɛᏒɛ ɪʂ ɮ❍┼ ❍ωɳɜɽ ɳaʍɜ•••🌷
-┏━🕊️━━°❀•°:°•❀°━━💞━┓
-   🌸✧✰🍒T̺͆A̺͆L̺͆H̺͆A̺͆🌿✰✧🌸
-┗━🕊️━━°❀•°:°•❀°━━💞━┛
-`,attachment: fs.createReadStream(__dirname + "/cache/juswa.jpg")}, event.threadID, () => fs.unlinkSync(__dirname + "/cache/juswa.jpg")); 
-      return request(encodeURI(link[Math.floor(Math.random() * link.length)])).pipe(fs.createWriteStream(__dirname+"/cache/juswa.jpg")).on("close",() => callback());
-   };
+╔═════ ∘◦ ✦ ◦∘ ═════╗
+    𝗦 𝗬 𝗦 𝗧 𝗘 𝗠 
+╚═════ ∘◦ ✦ ◦∘ ═════╝
+
+⏳ 𝗨𝗽𝘁𝗶𝗺𝗲: ${days}d ${hours}h ${minutes}m ${seconds}s
+🗓️ 𝗗𝗮𝘁𝗲: ${timeNow}
+⚙️ 𝗩𝗲𝗿𝘀𝗶𝗼𝗻: ${global.config.version || "1.0.0"}
+
+╔═════ ∘◦ ✧ ◦∘ ═════╗
+ 𝗧 𝗘 𝗖 𝗛 𝗡 𝗢 𝗟 𝗢 𝗚 𝗬 
+╚═════ ∘◦ ✧ ◦∘ ═════╝
+
+▸ Node.js ${process.version}
+▸ Mirai API Architecture
+▸ MongoDB Database
+▸ Redis Caching
+▸ Cloudflare Protection
+
+✧･ﾟ: *✧･ﾟ:* 𝗘𝗡𝗗 𝗢𝗙 𝗜𝗡𝗙𝗢 *:･ﾟ✧*:･ﾟ✧`;
+
+    return api.sendMessage({
+      body: poeticMessage,
+      attachment: fs.createReadStream(path)
+    }, event.threadID, () => fs.unlinkSync(path));
+
+  } catch (error) {
+    console.error("Premium Info Error:", error);
+    return api.sendMessage("🚫 Error: Failed to load info. Try again later!", event.threadID);
+  }
+};
