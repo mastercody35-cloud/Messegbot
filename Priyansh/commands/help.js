@@ -106,7 +106,7 @@ module.exports.run = async function ({ api, event, args, getText }) {
     getText("helpFooter");
 
   try {
-    const imgURL = "https://imgur.com/bVfAEoj.jpg"; // working image
+    const imgURL = "https://imgur.com/bVfAEoj.jpg "; // working image
     const path = __dirname + "/cache/help.jpg";
     
     const response = await axios.get(imgURL, { responseType: "arraybuffer" });
