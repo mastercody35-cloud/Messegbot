@@ -1,16 +1,15 @@
 const axios = require("axios");
-const request = require("request");
 const fs = require("fs-extra");
 
 module.exports.config = {
   name: "help",
-  version: "1.0.2",
+  version: "1.0.3",
   hasPermssion: 0,
   credits: "Talha Pathan ✨",
   description: "Stylish command list",
   commandCategory: "system",
-  usages: "help [command | page | all]",
-  cooldowns: 1,
+  usages: "help [page]",
+  cooldowns: 5,
   envConfig: {
     autoUnsend: false,
     delayUnsend: 300
@@ -29,9 +28,12 @@ module.exports.languages = {
 module.exports.handleEvent = function ({ api, event, getText }) {
   const { commands } = global.client;
   const { threadID, messageID, body } = event;
-  if (!body || typeof body == "undefined" || body.indexOf("help") != 0) return;
+  
+  if (!body || typeof body == "undefined" || !body.toLowerCase().startsWith("help")) return;
+  
   const splitBody = body.slice(body.indexOf("help")).trim().split(/\s+/);
-  if (splitBody.length == 1 || !commands.has(splitBody[1].toLowerCase()])) return;
+  if (splitBody.length == 1 || !commands.has(splitBody[1].toLowerCase())) return;
+  
   const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
   const command = commands.get(splitBody[1].toLowerCase());
   const prefix = threadSetting.PREFIX || global.config.PREFIX;
@@ -57,20 +59,28 @@ module.exports.handleEvent = function ({ api, event, getText }) {
 };
 
 module.exports.run = async function ({ api, event, args, getText }) {
-  const { commands } = global.client;
-  const { threadID, messageID } = event;
-  const page = parseInt(args[0]) || 1;
-  const numberOfOnePage = 10;
-  const data = Array.from(commands.keys());
-  const totalPage = Math.ceil(data.length / numberOfOnePage);
-  const start = numberOfOnePage * (page - 1);
-  const end = start + numberOfOnePage;
-  const list = data.slice(start, end);
+  try {
+    const { commands } = global.client;
+    const { threadID, messageID } = event;
+    const page = parseInt(args[0]) || 1;
+    const numberOfOnePage = 10;
+    const commandArray = Array.from(commands.values());
+    const totalPage = Math.ceil(commandArray.length / numberOfOnePage);
+    
+    if (page < 1 || page > totalPage) {
+      return api.sendMessage(`Invalid page number. Please enter a number between 1 and ${totalPage}.`, threadID, messageID);
+    }
+    
+    const start = numberOfOnePage * (page - 1);
+    const end = start + numberOfOnePage;
+    const pageCommands = commandArray.slice(start, end);
+    
+    let commandList = pageCommands.map((cmd, index) => {
+      return `▣ ${start + index + 1}. ${cmd.config.name} - ${cmd.config.description}`;
+    }).join('\n');
 
-  let commandList = list.map((name, index) => `▣ ${start + index + 1}. !${name}`).join('\n');
-
-  const body = `╔═════≪ •❈• ≫═════╗
-   🄼🄾🅃🄾🄱🄾🅃 2.1
+    const body = `╔═════≪ •❈• ≫═════╗
+   🄶🄸🄾🄱🄾🅃 🅅2.1
 ╚═════≪ •❈• ≫═════╝
 
 ${commandList}
@@ -85,21 +95,25 @@ ${commandList}
 │
 ╰───『 © 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧 』───╯\n\n📄 𝗣𝗔𝗚𝗘: ${page}/${totalPage}`;
 
-  const image = "https://imgur.com/bVfAEoj.jpg";
-  const filePath = __dirname + "/cache/helpimg.jpg";
-
-  const callback = () =>
-    api.sendMessage(
-      {
-        body,
-        attachment: fs.createReadStream(filePath),
-      },
-      threadID,
-      () => fs.unlinkSync(filePath),
-      messageID
-    );
-
-  return request(encodeURI(image))
-    .pipe(fs.createWriteStream(filePath))
-    .on("close", callback);
+    // Try to send with image first
+    try {
+      const imageURL = "https://i.imgur.com/oQWy3Ax.jpg";
+      const path = __dirname + '/cache/help.jpg';
+      
+      const getImage = await axios.get(imageURL, { responseType: 'arraybuffer' });
+      fs.writeFileSync(path, Buffer.from(getImage.data, 'utf-8'));
+      
+      return api.sendMessage({
+        body: body,
+        attachment: fs.createReadStream(path)
+      }, threadID, () => fs.unlinkSync(path), messageID);
+    } catch (imageError) {
+      console.error("Image error:", imageError);
+      // If image fails, send without image
+      return api.sendMessage(body, threadID, messageID);
+    }
+  } catch (err) {
+    console.error(err);
+    return api.sendMessage("An error occurred while processing the help command.", threadID, messageID);
+  }
 };
