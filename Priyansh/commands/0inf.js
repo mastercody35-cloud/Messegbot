@@ -1,61 +1,60 @@
 module.exports.config = {
   name: "inf",
-  version: "1.0.1", 
+  version: "1.0.1",
   hasPermssion: 0,
-  credits: "Siizz", //don't change the credits please
+  credits: "Siizz",
   description: "Admin and Bot info.",
   commandCategory: "...",
   cooldowns: 1,
-  dependencies: 
-  {
-    "request":"",
-    "fs-extra":"",
-    "axios":""
+  dependencies: {
+    "request": "",
+    "fs-extra": "",
+    "axios": ""
   }
 };
-module.exports.run = async function({ api,event,args,client,Users,Threads,__GLOBAL,Currencies }) {
-const axios = global.nodemodule["axios"];
-const request = global.nodemodule["request"];
-const fs = global.nodemodule["fs-extra"];
-const time = process.uptime(),
+
+module.exports.run = async function({ api, event, args, client, Users, Threads, __GLOBAL, Currencies }) {
+  const axios = global.nodemodule["axios"];
+  const request = global.nodemodule["request"];
+  const fs = global.nodemodule["fs-extra"];
+  const time = process.uptime(),
     hours = Math.floor(time / (60 * 60)),
     minutes = Math.floor((time % (60 * 60)) / 60),
     seconds = Math.floor(time % 60);
-const moment = require("moment-timezone");
-var juswa = moment.tz("Asia/Lahore").format("『D/MM/YYYY』 【HH:mm:ss】");
-var link =                                     
-["https://imgur.com/bVfAEoj.jpg"];
-var callback = () => api.sendMessage({body:` ╔╬⓼★⓼╃────𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐓𝐈𝐎𝐍─𝄠━─Ⓔ⧐ ╰✾✾╀✿✿╀─━ↈⓇ⧐
+  const moment = require("moment-timezone");
+  var juswa = moment.tz("Asia/Lahore").format("『D/MM/YYYY』 【HH:mm:ss】");
 
-☄️•| 𝙱𝙾𝚃 𝙽𝙰𝙼𝙴 |•☄️  ${global.config.BOTNAME}
+  var link = ["https://imgur.com/bVfAEoj.jpg"];
 
-🥀𝐑𝐞𝐥𝐚𝐭𝐢𝐨𝐧𝐬𝐡𝐢𝐩 :- 𝐒𝐢𝐧𝐠𝐋𝐞
+  var callback = () => api.sendMessage({
+    body:
+`╭─❍❍❍❍❍❍❍❍❍❍❍❍─╮
+        💖 ʙᴏᴛ ɪɴꜰᴏ ꜱʏꜱᴛᴇᴍ  
+╰─❍❍❍❍❍❍❍❍❍❍❍❍─╯
 
-🙈𝗕𝗢𝗧 𝗢𝗪𝗡𝗘𝗥 𝗙𝗕 𝗜𝗗 𝗟𝗜𝗡𝗞🙈➪ 
+🌸 𝗕𝗢𝗧 𝗡𝗔𝗠𝗘: ${global.config.BOTNAME}
+👑 𝗢𝗪𝗡𝗘𝗥: 𝐌 𝐓𝐀𝐋𝐇𝐀 (Credit)
+💘 𝗥𝗘𝗟𝗔𝗧𝗜𝗢𝗡𝗦𝗛𝗜𝗣:
+ʜᴀɪ ᴍᴇʀɪ ᴇᴋ ᴘʏᴀʀɪ ꜱɪ ꜱʜᴇʜᴢᴀᴅɪ 💞
+ᴊɪꜱᴇ ᴍᴀɪɴ ᴘʏᴀʀ ꜱᴇ ᴊᴀɴᴀ ᴋᴇʜᴛᴀ 💗
 
-https://www.facebook.com/share/193GypVyJQ/ 🌸💯
+🌐 𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞:
+📎 https://www.facebook.com/share/193GypVyJQ/
 
-💋🦋_____________________🔥👑
-°
-                بََدناَمِ تَو بُہتِِ ہُ٘وں اسِِؔں زَمـاَنِِـے مََی٘ں 
-         تُو بَ٘تاََ تَیرِے سُنّنِے مَی٘ں کِِ٘ونَسؔاَ قِ٘ـصََـہ آیاَ ہََـ٘ے
-🍒🦋_____________________💋🍷
-✧══════•❁❀❁•══════✧
+🛠️ 𝗣𝗥𝗘𝗙𝗜𝗫: ${global.config.PREFIX}
+⏳ 𝗨𝗣𝗧𝗜𝗠𝗘: ${hours}h ${minutes}m ${seconds}s
+📆 𝗧𝗜𝗠𝗘 & 𝗗𝗔𝗧𝗘: ${juswa}
 
-🌸Bot Prefix🌸☞︎︎︎☜︎︎︎✰ ${global.config.PREFIX}
+🌷❝ بََدناَمِ تَو بُہتِِ ہُ٘وں اسِِؔں زَمـاَنِِـے مََی٘ں ❞
+❝ تُو بَ٘تاََ تَیرِے سُنّنِے مَی٘ں کِِ٘ونَسؔاَ قِ٘ـصََـہ آیاَ ہََـ٘ے ❞ 🥀
 
-♥️Bot Owner♥️ ★᭄𝗖𝗿𝗲𝗱𝗶𝘁𝘀 ༄𒁍≛⃝𝐌 𝐓𝐀𝐋𝐇𝐀
+╭─────♡─────╮
+ 💞 ᴛʜᴀɴᴋꜱ ꜰᴏʀ ᴜꜱɪɴɢ ᴍʏ ʙᴏᴛ!
+╰─────♡─────╯`,
+    attachment: fs.createReadStream(__dirname + "/cache/juswa.jpg")
+  }, event.threadID, () => fs.unlinkSync(__dirname + "/cache/juswa.jpg"));
 
-🥳UPTIME🥳
-
-🌪️Today is🌪️ ☞︎︎︎☜︎︎︎✰ ${juswa} 
-
-⚡Bot is running⚡ ${hours}:${minutes}:${seconds}.
-
-🦢🍒•••ꞪɛᏒɛ ɪʂ ɮ❍┼ ❍ωɳɜɽ ɳaʍɜ•••🌷
-┏━🕊️━━°❀•°:°•❀°━━💞━┓
-  🌸✧✰🍒T̺͆A̺͆L̺͆H̺͆A̺͆🌿✰✧🌸
-┗━🕊️━━°❀•°:°•❀°━━💞━┛
-`,attachment: fs.createReadStream(__dirname + "/cache/juswa.jpg")}, event.threadID, () => fs.unlinkSync(__dirname + "/cache/juswa.jpg")); 
-      return request(encodeURI(link[Math.floor(Math.random() * link.length)])).pipe(fs.createWriteStream(__dirname+"/cache/juswa.jpg")).on("close",() => callback());
-   };
+  return request(encodeURI(link[Math.floor(Math.random() * link.length)]))
+    .pipe(fs.createWriteStream(__dirname + "/cache/juswa.jpg"))
+    .on("close", () => callback());
+};
