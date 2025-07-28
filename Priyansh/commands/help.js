@@ -1,125 +1,115 @@
 module.exports.config = {
   name: "help",
-  version: "1.2.0",
+  version: "2.2.0",
   hasPermssion: 0,
   credits: "Talha ✨",
-  description: "Stylish commands list with images",
+  description: "🔮 Ultimate Command List with 10 Commands/Page",
   commandCategory: "system",
-  usages: "help [command | page]",
-  cooldowns: 5,
-  envConfig: {
-    autoUnsend: false,
-    delayUnsend: 300
-  }
+  usages: "help [command]",
+  cooldowns: 3
 };
 
 module.exports.languages = {
   "en": {
-    "moduleInfo": `❖ 𝐂𝐨𝐦𝐦𝐚𝐧𝐝 ➟ %1\n\n📄 𝐃𝐞𝐬𝐜: %2\n⚙️ 𝐔𝐬𝐚𝐠𝐞: %3\n📂 𝐂𝐚𝐭𝐞𝐠𝐨𝐫𝐲: %4\n⏱ 𝐂𝐨𝐨𝐥𝐝𝐨𝐰𝐧: %5s\n🔐 𝐏𝐞𝐫𝐦𝐢𝐬𝐬𝐢𝐨𝐧: %6\n👑 𝐂𝐫𝐞𝐝𝐢𝐭: %7`,
-    "user": "User",
-    "adminGroup": "Group Admin",
-    "adminBot": "Bot Admin",
-    "helpHeader": "𝐎𝐰𝐧𝐞𝐫 ➻ 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧\n\n",
-    "helpFooter": "\n● ──────────────────── ●\n\n𝐌𝐘 𝐎𝐰𝐧𝐞𝐑 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧 .... < 𝐄𝐃𝐈𝐓 >\n𝐘𝐞 𝐁𝐨𝐓 𝐒𝐢𝐫𝐟 𝐎𝐰𝐧𝐞𝐑 𝐊 𝐋𝐢𝐲𝐞 𝐇\n𝐌𝐮𝐣𝐡𝐞 𝐀𝐚𝐩 𝐋𝐨𝐠𝐨 𝐊𝐨 𝐇𝐚𝐬𝐚𝐧𝐞 𝐊 𝐋𝐢𝐲𝐞 𝐁𝐚𝐧𝐚𝐲𝐚 𝐆𝐲𝐚 𝐇\n𝐓𝐨𝐡 𝐇𝐚𝐩𝐩𝐲 𝐑𝐞𝐡𝐚𝐧𝐚\n𝐀𝐩𝐤𝐚 𝐀𝐩𝐧𝐚 𝐎𝐰𝐧𝐞𝐑 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧\n\n● ─────────────────── ●"
+    "moduleInfo": `┌──『 ✦ 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗜𝗡𝗙𝗢 』✦──┐
+    
+▢ 𝗡𝗮𝗺𝗲 ➤ ${prefix}%1
+▢ 𝗗𝗲𝘀𝗰 ➤ %2
+▢ 𝗨𝘀𝗮𝗴𝗲 ➤ %3
+▢ 𝗖𝗮𝘁𝗲𝗴𝗼𝗿𝘆 ➤ %4
+▢ 𝗖𝗼𝗼𝗹𝗱𝗼𝘄𝗻 ➤ %5s
+▢ 𝗣𝗲𝗿𝗺𝘀 ➤ %6
+▢ 𝗖𝗿𝗲𝗱𝗶𝘁𝘀 ➤ %7
+
+└───✦✧✦───┘`,
+    "helpHeader": `╔═════≪ •❈• ≫═════╗
+   🄼🄾🅃🄾🄱🄾🅃 2.2
+╚═════≪ •❈• ≫═════╝
+
+👑 𝗢𝘄𝗻𝗲𝗿 ➤ 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧
+📡 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀 𝗟𝗶𝘀𝘁 (10/𝗣𝗮𝗴𝗲):
+`,
+    "helpFooter": `
+╭───『 📍 𝗣𝗮𝗴𝗲 %1/%2 』───╮
+│
+│ ✦ 𝗧𝘆𝗽𝗲: ${prefix}help [cmd]
+│ ✦ 𝗧𝗼𝘁𝗮𝗹 𝗖𝗺𝗱𝘀: ${commands.size}
+│
+╰────────────────╯
+
+╭───『 ✨ 𝗢𝗪𝗡𝗘𝗥 𝗠𝗘𝗦𝗦𝗔𝗚𝗘 』───╮
+│
+│ ❝ 𝐓𝐇𝐈𝐒 𝐁𝐎𝐓 𝐈𝐒 𝐌𝐀𝐃𝐄 𝐒𝐏𝐄𝐂𝐈𝐀𝐋𝐋𝐘
+│ 𝐅𝐎𝐑 𝐌𝐘 𝐎𝐖𝐍𝐄𝐑 𝐓𝐀𝐋𝐇𝐀 𝐏𝐀𝐓𝐇𝐀𝐍! ❞
+│
+│ 🌟 𝐔𝐒𝐄 𝐈𝐓 𝐓𝐎 𝐌𝐀𝐊𝐄 𝐏𝐄𝐎𝐏𝐋𝐄 𝐒𝐌𝐈𝐋𝐄
+│ 🎉 𝐒𝐓𝐀𝐘 𝐇𝐀𝐏𝐏𝐘 & 𝐄𝐍𝐉𝐎𝐘!
+│
+╰───『 © 𝐓𝐚𝐥𝐡𝐚 𝐏𝐚𝐭𝐡𝐚𝐧 』───╯
+`
   }
 };
 
-module.exports.handleEvent = async function ({ api, event, getText }) {
+module.exports.run = async function({ api, event, args, getText }) {
   const { commands } = global.client;
-  const { threadID, messageID, body } = event;
+  const fs = require('fs-extra');
+  const axios = require('axios');
+  const prefix = global.config.PREFIX;
 
-  if (!body || !body.toLowerCase().startsWith("help")) return;
-  
-  const args = body.split(" ").slice(1);
-  if (args.length === 0 || !commands.has(args[0].toLowerCase())) return;
-  
-  const command = commands.get(args[0].toLowerCase());
-  const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
-  const prefix = threadSetting.PREFIX || global.config.PREFIX;
-
-  const infoText = getText(
-    "moduleInfo",
-    command.config.name,
-    command.config.description,
-    `${prefix}${command.config.name} ${command.config.usages || ""}`,
-    command.config.commandCategory,
-    command.config.cooldowns,
-    command.config.hasPermssion == 0 ? getText("user") : 
-      (command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot")),
-    command.config.credits
-  );
-
-  try {
-    await api.sendMessage(infoText, threadID, messageID);
-  } catch (error) {
-    console.error("Error sending help info:", error);
-  }
-};
-
-module.exports.run = async function ({ api, event, args, getText }) {
-  const axios = require("axios");
-  const fs = require("fs-extra");
-  const { commands } = global.client;
-  const { threadID, messageID } = event;
-  const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
-  const prefix = threadSetting.PREFIX || global.config.PREFIX;
-
+  // Command-specific help
   if (args[0]) {
-    const command = commands.get(args[0].toLowerCase());
-    if (command) {
-      const infoText = getText(
-        "moduleInfo",
-        command.config.name,
-        command.config.description,
-        `${prefix}${command.config.name} ${command.config.usages || ""}`,
-        command.config.commandCategory,
-        command.config.cooldowns,
-        command.config.hasPermssion == 0 ? getText("user") : 
-          (command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot")),
-        command.config.credits
+    const cmd = commands.get(args[0].toLowerCase());
+    if (cmd) {
+      const info = getText("moduleInfo", 
+        cmd.config.name,
+        cmd.config.description,
+        `${prefix}${cmd.config.name} ${cmd.config.usages || ""}`,
+        cmd.config.commandCategory,
+        cmd.config.cooldowns,
+        cmd.config.hasPermssion == 0 ? "👤 User" : 
+          (cmd.config.hasPermssion == 1 ? "👑 Admin" : "🤖 Bot Owner"),
+        cmd.config.credits
       );
-      return api.sendMessage(infoText, threadID, messageID);
+      return api.sendMessage(info, event.threadID);
     }
   }
 
+  // Main help menu (10 commands/page)
   const page = parseInt(args[0]) || 1;
-  const perPage = 10;
-  const commandList = Array.from(commands.keys()).sort();
-  const totalPages = Math.ceil(commandList.length / perPage);
-  
-  if (page < 1 || page > totalPages) {
-    return api.sendMessage(`Invalid page number. Please choose between 1 and ${totalPages}.`, threadID, messageID);
-  }
+  const perPage = 10; // Changed from 2 to 10
+  const totalPages = Math.ceil(commands.size / perPage);
 
   const startIdx = (page - 1) * perPage;
-  const pageCommands = commandList.slice(startIdx, startIdx + perPage);
-  
-  let list = pageCommands.map((cmd, i) => {
-    return `😈  「 ${startIdx + i + 1} 」${prefix}${cmd}`;
-  }).join("\n");
+  const cmdList = Array.from(commands.keys())
+    .slice(startIdx, startIdx + perPage)
+    .map((cmd, i) => `▣ ${startIdx + i + 1}. ${prefix}${cmd}`)
+    .join('\n');
 
   const body = getText("helpHeader") + 
-    list +
-    `\n\nPAGE 𒁍 (${page}/${totalPages})\n\n` +
-    `𝗖𝗼𝗺𝗺𝗮𝗻𝗱 𝗗𝗲𝘁𝗮𝗶𝗹 ➠ ${prefix}help [command]\n` +
-    `𝗔𝗹𝗹 𝗖𝗺𝗱𝘀 ➠ ${prefix}help all\n` +
-    getText("helpFooter");
+    cmdList + 
+    getText("helpFooter", page, totalPages);
+
+  // Background images
+  const bgImages = [
+    "https://imgur.com/bVfAEoj.jpg",
+    "https://imgur.com/bVfAEoj.jpg",
+    "https://imgur.com/bVfAEoj.jpg"
+  ];
+  const randomBG = bgImages[Math.floor(Math.random() * bgImages.length)];
 
   try {
-    const imgURL = "https://imgur.com/bVfAEoj.jpg "; // working image
-    const path = __dirname + "/cache/help.jpg";
-    
-    const response = await axios.get(imgURL, { responseType: "arraybuffer" });
-    await fs.writeFile(path, Buffer.from(response.data, "binary"));
+    const path = __dirname + '/cache/helpv2.jpg';
+    const { data } = await axios.get(randomBG, { responseType: 'arraybuffer' });
+    fs.writeFileSync(path, Buffer.from(data, 'binary'));
     
     await api.sendMessage({
       body: body,
       attachment: fs.createReadStream(path)
-    }, threadID);
+    }, event.threadID);
     
     fs.unlinkSync(path);
-  } catch (error) {
-    console.error("Error sending help image:", error);
-    await api.sendMessage(body, threadID, messageID);
+  } catch (e) {
+    console.error(e);
+    await api.sendMessage(body, event.threadID);
   }
 };
