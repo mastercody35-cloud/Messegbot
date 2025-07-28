@@ -50,7 +50,7 @@ module.exports.run = async ({ api, event, args }) => {
 ╰───『 Page: ${page}/${totalPages} 』───╯`;
 
   // Stylish image (update link if needed)
-  const imgUrl = "https://ibb.co/SwqCYqLz";
+  const imgUrl = "https://i.imgur.com/bVfAEoj.jpeg";
   const pathImg = __dirname + "/help.jpg";
 
   const writeImg = () => new Promise((resolve, reject) => {
