@@ -4,7 +4,7 @@ const request = require("request");
 
 module.exports.config = {
   name: "help",
-  version: "2.3.0",
+  version: "2.3.1",
   hasPermssion: 0,
   credits: "Talha ✨",
   description: "Stylish command list with 10/page",
@@ -29,27 +29,15 @@ module.exports.run = async ({ api, event, args }) => {
 
   const pageCommands = commandList.slice(start, end);
 
+  // With fancy line separator
   const commandInfo = pageCommands.map((cmd, index) => {
-    return `✨ 𝗡𝗮𝗺𝗲: ${cmd.config.name}\n📘 𝗨𝘀𝗮𝗴𝗲: ${cmd.config.usages || "No usage"}\n🧩 𝗗𝗲𝘀𝗰: ${cmd.config.description || "No description"}\n────────────────────────────`;
+    return `✨ 𝗡𝗮𝗺𝗲: ${cmd.config.name}\n━═━═━═━═━═✦═━═━═━═━═`;
   }).join("\n");
 
-  const header = `
-╔═════≪ •❈• ≫═════╗
-     🄼🄾🅃🄾🄱🄾🅃 
-╚═════≪ •❈• ≫═════╝`;
+  const header = ` ╔═════≪ •❈• ≫═════╗\n     🄼🄾🅃🄾🄱🄾🅃\n ╚═════≪ •❈• ≫═════╝`;
 
-  const footer = `
-╭───『 ✨ 𝗢𝗪𝗡𝗘𝗥 𝗠𝗘𝗦𝗦𝗔𝗚𝗘 』───╮
-│
-│ ❝ 𝐓𝐇𝐈𝐒 𝐁𝐎𝐓 𝐈𝐒 𝐌𝐀𝐃𝐄 𝐒𝐏𝐄𝐂𝐈𝐀𝐋𝐋𝐘
-│   𝐅𝐎𝐑 𝐌𝐘 𝐎𝐖𝐍𝐄𝐑 — 𝐓𝐀𝐋𝐇𝐀 𝐏𝐀𝐓𝐇𝐀𝐍 ❞
-|    
-│ 🌟 𝐄𝐍𝐉𝐎𝐘 𝐓𝐇𝐄 𝐁𝐎𝐓 𝐀𝐍𝐃 𝐁𝐄 𝐒𝐌𝐈𝐋𝐄!
-│ 💌 𝐂𝐎𝐍𝐓𝐀𝐂𝐓: 𝐅𝐛:https://www.facebook.com/share/193GypVyJQ/
-│
-╰───『 Page: ${page}/${totalPages} 』───╯`;
+  const footer = `╭───『 ✨ 𝗢𝗪𝗡𝗘𝗥 𝗠𝗘𝗦𝗦𝗔𝗚𝗘 』───╮\n│ ❝ 𝐓𝐇𝐈𝐒 𝐁𝐎𝐓 𝐈𝐒 𝐌𝐀𝐃𝐄 𝐅𝐎𝐑 𝐓𝐀𝐋𝐇𝐀 𝐏𝐀𝐓𝐇𝐀𝐍 ❞\n│ 🌟 𝐄𝐍𝐉𝐎𝐘 𝐓𝐇𝐄 𝐁𝐎𝐓 𝐀𝐍𝐃 𝐁𝐄 𝐒𝐌𝐈𝐋𝐄!\n│ 💌 𝐂𝐎𝐍𝐓𝐀𝐂𝐓: fb.com/share/193GypVyJQ/\n╰───『 Page: ${page}/${totalPages} 』───╯`;
 
-  // Stylish image (update link if needed)
   const imgUrl = "https://i.imgur.com/bVfAEoj.jpeg";
   const pathImg = __dirname + "/help.jpg";
 
