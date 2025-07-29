@@ -38,8 +38,8 @@ module.exports.handleEvent = async ({ event, api, Threads }) => {
     const str = keyword.charAt(0).toUpperCase() + keyword.slice(1);
     if (body === keyword || body === keyword.toUpperCase() || body === str) {
       return send(
-`╔════ ❀.•🎀•.❀ ════╗
-       𝐁𝐎𝐓 𝐏𝐑𝐄𝐅𝐈𝐗
+` ╔════ ❀.•🎀•.❀ ════╗
+         𝐁𝐎𝐓 𝐏𝐑𝐄𝐅𝐈𝐗
  ╚════ ❀.•🎀•.❀ ════╝
 
 🔹 𝗣𝗥𝗘𝗙𝗜𝗫: [ ${prefix} ]
@@ -59,8 +59,8 @@ module.exports.run = async ({ event, api, Threads }) => {
   const prefix = threadSetting.PREFIX || global.config.PREFIX;
 
   return api.sendMessage(
-`╔════ ❀.•🎀•.❀ ════╗
-       𝐁𝐎𝐓 𝐏𝐑𝐄𝐅𝐈𝐗
+` ╔════ ❀.•🎀•.❀ ════╗
+         𝐁𝐎𝐓 𝐏𝐑𝐄𝐅𝐈𝐗
  ╚════ ❀.•🎀•.❀ ════╝
 
 🔹 𝗣𝗥𝗘𝗙𝗜𝗫: [ ${prefix} ]
