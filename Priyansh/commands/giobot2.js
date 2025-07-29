@@ -69,14 +69,14 @@ module.exports.handleEvent = async ({ event, api }) => {
 
   const randomLine = poetryLines[Math.floor(Math.random() * poetryLines.length)];
 
-  const image_url = "https://i.ibb.co/C5LnGCV2/inbound9146910149612956362.jpg"; // Replace this image if needed
+  const image_url = ""; // Replace this image if needed
 
   const styledBody = `
 ╭─❍🌸 𝑍𝐼𝐷𝐼 𝑅𝐸𝑆𝑃𝑂𝑁𝑆 🌸❍─╮
 
-${randomLine}
+    ${randomLine}
 
-📸 𝐈𝐌𝐀𝐆𝐄: ${image_url}
+
 ╰──────❍ 𝐓𝐀𝐋𝐇𝐀 𝐁𝐎𝐓 ❍──────╯
 `;
 
