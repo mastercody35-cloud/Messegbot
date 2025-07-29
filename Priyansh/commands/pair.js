@@ -2,7 +2,7 @@ module.exports.config = {
   name: "pair",
   version: "1.0.0", 
   hasPermssion: 0,
-  credits: "ALI BABA",
+  credits: "Modified by Talha",
   description: "pairing",
   commandCategory: "Love", 
   usages: "pair", 
@@ -21,6 +21,7 @@ module.exports.run = async function({ api, event, Threads, Users }) {
   var id = listUserID[Math.floor(Math.random() * listUserID.length)];
   var name = (await Users.getData(id)).name;
   var arraytag = [];
+
   const gifCute = [
     "https://i.pinimg.com/originals/42/9a/89/429a890a39e70d522d52c7e52bce8535.gif",
     "https://i.imgur.com/HvPID5q.gif",
@@ -29,49 +30,51 @@ module.exports.run = async function({ api, event, Threads, Users }) {
     "https://i.imgur.com/BWji8Em.gif",
     "https://i.imgur.com/ubJ31Mz.gif"
   ];
-  
-  arraytag.push({id: event.senderID, tag: namee});
-  arraytag.push({id: id, tag: name});
 
-  let Avatar = (await axios.get(`https://graph.facebook.com/${event.senderID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, { responseType: "arraybuffer" })).data; 
+  arraytag.push({ id: event.senderID, tag: namee });
+  arraytag.push({ id: id, tag: name });
+
+  // 📝 Random Romantic Poetry List
+  const shayariList = [
+    "❝ تمہارے بعد کسی کو دل میں جگہ نہ دی 💔\nکیونکہ تم جو گئے دل ہی لے گئے ❞",
+    "❝ میری آنکھوں میں چھپی تیری چاہت ہے 💖\nتو سامنے ہو پھر بھی تیری ہی کمی ہے ❞",
+    "❝ تم ملے تو لگا ہر خوشی مل گئی ✨\nتیری مسکراہٹ میری بندگی بن گئی ❣️ ❞",
+    "❝ نہ فاصلے دلوں میں رہیں، نہ شکایتیں باقی ہوں 💖\nتم میرے ہو بس، یہ بات سب پہ عیاں ہو جائے 🌙 ❞",
+    "❝ تیرے بغیر ادھورا ہوں میں 🌌\nتو جو پاس ہو تو مکمل لگتا ہوں 💞 ❞",
+    "❝ تیری خاموشی بھی محبت کی زبان لگتی ہے 🌷\nتُو پاس ہو تو ہر شے آسان لگتی ہے 💘 ❞"
+  ];
+  const randomPoetry = shayariList[Math.floor(Math.random() * shayariList.length)];
+
+  // 🖼️ Avatar Images & GIFs
+  let Avatar = (await axios.get(`https://graph.facebook.com/${event.senderID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, { responseType: "arraybuffer" })).data;
   fs.writeFileSync(__dirname + "/cache/avt.png", Buffer.from(Avatar, "utf-8"));
 
-  let gifLove = (await axios.get(gifCute[Math.floor(Math.random() * gifCute.length)], { responseType: "arraybuffer" })).data; 
+  let gifLove = (await axios.get(gifCute[Math.floor(Math.random() * gifCute.length)], { responseType: "arraybuffer" })).data;
   fs.writeFileSync(__dirname + "/cache/giflove.png", Buffer.from(gifLove, "utf-8"));
 
   let Avatar2 = (await axios.get(`https://graph.facebook.com/${id}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, { responseType: "arraybuffer" })).data;
   fs.writeFileSync(__dirname + "/cache/avt2.png", Buffer.from(Avatar2, "utf-8"));
 
-  var imglove = [];
-  imglove.push(fs.createReadStream(__dirname + "/cache/avt.png"));
-  imglove.push(fs.createReadStream(__dirname + "/cache/giflove.png"));
-  imglove.push(fs.createReadStream(__dirname + "/cache/avt2.png"));
+  var imglove = [
+    fs.createReadStream(__dirname + "/cache/avt.png"),
+    fs.createReadStream(__dirname + "/cache/giflove.png"),
+    fs.createReadStream(__dirname + "/cache/avt2.png")
+  ];
 
+  // 📨 Final Message
   var msg = {
-    body: `
-╔════ஓ๑♡๑ஓ════╗
-        💘 𝑷𝒂𝒊𝒓 𝑴𝒂𝒅𝒆 𝒊𝒏 𝑯𝒆𝒂𝒗𝒆𝒏 💘
-╚════ஓ๑♡๑ஓ════╝
+    body: `╭─╼⃝🔥 𝐏𝐀𝐈𝐑 𝐋𝐎𝐂𝐊𝐄𝐃 🔥⃝╾─╮
 
-🌹 𝐏𝐞𝐫𝐟𝐞𝐜𝐭 𝐋𝐨𝐯𝐞 𝐂𝐨𝐮𝐩𝐥𝐞 𝐅𝐨𝐮𝐧𝐝! 🌹
+💞 ${namee} ❤️ ${name}
+💌 𝐋𝐨𝐯𝐞 𝐌𝐚𝐭𝐜𝐡: ${tle}%
 
-🥀 𝐇𝐞: ${namee}
-🌸 𝐒𝐡𝐞: ${name}
+📜 *𝐒𝐡𝐞𝐫 𝐨𝐟 𝐭𝐡𝐞 𝐃𝐚𝐲:*  
+${randomPoetry}
 
-❤️‍🔥 𝐋𝐎𝐕𝐄 𝐌𝐀𝐓𝐂𝐇: ${tle}%
-💞 𝑳𝒐𝒗𝒆 𝑪𝒐𝒏𝒏𝒆𝒄𝒕𝒆𝒅... 𝑾𝒂𝒊𝒕 𝒇𝒐𝒓 𝒕𝒉𝒆 𝒎𝒂𝒈𝒊𝒄 ✨
-
-━━━━━━━━━━━━━━
-🔐 𝗣𝗮𝗶𝗿𝗲𝗱 𝗯𝘆: 𝑻𝒂𝒍𝒉𝒂 𝑷𝒂𝒕𝒉𝒂𝒏 💫
-📆 𝗗𝗮𝘁𝗲: ${new Date().toLocaleDateString('en-PK')}
-🕰️ 𝗧𝗶𝗺𝗲: ${new Date().toLocaleTimeString('en-PK')}
-━━━━━━━━━━━━━━
-
-🌟 𝑺𝒑𝒓𝒆𝒂𝒅 𝑳𝒐𝒗𝒆, 𝑴𝒂𝒌𝒆 𝑳𝒊𝒇𝒆 𝑩𝒆𝒂𝒖𝒕𝒊𝒇𝒖𝒍 💖
-    `,
+╰─➤ 𝐂𝐨𝐧𝐟𝐢𝐫𝐦𝐞𝐝 𝐁𝐲: 👑 𝑻𝒂𝒍𝒉𝒂 𝑩𝒐𝒕 👑`,
     mentions: arraytag,
     attachment: imglove
   };
-  
+
   return api.sendMessage(msg, event.threadID, event.messageID);
 }
