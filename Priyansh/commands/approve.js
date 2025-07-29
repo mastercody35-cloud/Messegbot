@@ -74,7 +74,7 @@ module.exports.run = async ({ event, api, args, Threads }) => {
 
       case "help":
       case "h": {
-        const prefix = global.config.PREFIX || "#";
+        const prefix = global.config.PREFIX || "*";
         return sendMessage(
           `🌐 𝗔𝗣𝗣𝗥𝗢𝗩𝗘 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗠𝗘𝗡𝗨 🌐\n\n` +
           `📌 ${prefix}approve list / l → Show approved groups\n` +
@@ -109,7 +109,7 @@ module.exports.run = async ({ event, api, args, Threads }) => {
         // Send fancy message with optional image
         const message = {
           body:
-            `╔═════【🌟 𝗕𝗢𝗧 𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗 🌟】═════╗\n\n` +
+            `╔══【🌟 𝗕𝗢𝗧 𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗 🌟】══╗\n\n` +
             `🎀 𝗕𝗢𝗧 𝗖𝗢𝗡𝗡𝗘𝗖𝗧𝗘𝗗 𝗦𝗨𝗖𝗖𝗘𝗦𝗦𝗙𝗨𝗟𝗟𝗬 🎀\n\n` +
             `✨ Group has been approved by 👑 𝑻𝒂𝒍𝒉𝒂 𝑷𝒂𝒕𝒉𝒂𝒏 ✨\n` +
             `────────────────────────────\n` +
