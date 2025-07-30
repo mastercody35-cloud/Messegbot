@@ -3,64 +3,71 @@ module.exports.config = {
   version: "1.0.0",
   hasPermssion: 0,
   credits: "Talha ✨",
-  description: "Cute love pair command",
+  description: "Pair with a random girl from the group",
   commandCategory: "Love",
   usages: "pair2",
-  cooldowns: 5,
+  cooldowns: 10
 };
 
 const axios = require("axios");
 const fs = require("fs-extra");
 
-module.exports.run = async function ({ api, event, Users }) {
-  const threadID = event.threadID;
+module.exports.run = async function({ api, event, Users, Threads }) {
+  const { threadID, senderID, messageID } = event;
 
-  // Get participant list
-  const { participantIDs } = await api.getThreadInfo(threadID);
-  const members = participantIDs.filter(id => id != api.getCurrentUserID());
+  // Get all participants in the thread
+  const threadInfo = await api.getThreadInfo(threadID);
+  const allMembers = threadInfo.participantIDs;
 
-  if (members.length < 2) {
-    return api.sendMessage("⚠️ Kam az kam 2 members chahiye pairing ke liye!", threadID);
+  // Filter out girls (optional logic, here we assume girls have female gender if set)
+  const usersData = await Promise.all(
+    allMembers.map(async id => ({ 
+      id, 
+      gender: (await api.getUserInfo(id))[id]?.gender 
+    }))
+  );
+
+  // Filter only female users
+  const femaleUsers = usersData.filter(u => u.gender === 'female' && u.id !== senderID);
+  if (femaleUsers.length === 0) {
+    return api.sendMessage("❌ Group mein koi larki nahi mili pairing ke liye.", threadID, messageID);
   }
 
-  // Random 2 users
-  const uid1 = members[Math.floor(Math.random() * members.length)];
-  let uid2 = uid1;
-  while (uid2 === uid1) {
-    uid2 = members[Math.floor(Math.random() * members.length)];
-  }
+  const girl = femaleUsers[Math.floor(Math.random() * femaleUsers.length)];
 
-  // Get names
-  const name1 = await Users.getNameUser(uid1);
-  const name2 = await Users.getNameUser(uid2);
+  const senderName = (await api.getUserInfo(senderID))[senderID].name;
+  const girlName = (await api.getUserInfo(girl.id))[girl.id].name;
 
-  // Get DPs
-  const img1 = (await axios.get(`https://graph.facebook.com/${uid1}/picture?width=720&height=720`, { responseType: "stream" })).data;
-  const img2 = (await axios.get(`https://graph.facebook.com/${uid2}/picture?width=720&height=720`, { responseType: "stream" })).data;
+  const lovePercent = Math.floor(Math.random() * 31) + 70;
 
-  const loveRatio = Math.floor(Math.random() * 40 + 60);
+  const senderDP = (await axios.get(`https://graph.facebook.com/${senderID}/picture?width=512&height=512&access_token=YOUR_TOKEN_HERE`, { responseType: 'arraybuffer' })).data;
+  const girlDP = (await axios.get(`https://graph.facebook.com/${girl.id}/picture?width=512&height=512&access_token=YOUR_TOKEN_HERE`, { responseType: 'arraybuffer' })).data;
+
+  fs.writeFileSync(__dirname + "/boy.png", Buffer.from(senderDP, "utf-8"));
+  fs.writeFileSync(__dirname + "/girl.png", Buffer.from(girlDP, "utf-8"));
 
   const msg = {
     body: `
-╔════ஓ๑♡๑ஓ════╗
-  💘𝑪𝒖𝒕𝒆 𝑪𝒐𝒖𝒑𝒍𝒆'𝑺💘
-╚════ஓ๑♡๑ஓ════╝
+╔══ 💖 𝑷𝒂𝒊𝒓 𝑴𝒂𝒅𝒆 𝒊𝒏 𝑯𝒆𝒂𝒗𝒆𝒏 💖 ══╗
 
-👩‍❤️‍👨 𝗝𝗼𝗱𝗶 𝗧𝗮𝗯𝗮𝗵 𝗞𝗮𝗿𝗻𝗲 𝗔𝗮𝗿𝗵𝗶 𝗛𝗮𝗶 🌸
-❤️ ${name1}  💞  ${name2}
-🔮 𝙻𝚘𝚟𝚎 𝙼𝚊𝚝𝚌𝚑: ${loveRatio}%
+💘 𝓢𝔀𝓮𝓮𝓽 𝓛𝓸𝓿𝓮 𝓜𝓪𝓽𝓬𝓱 💘
 
-🎵 "𝑇𝑢𝑚 ℎ𝑜 𝑡𝑜 𝑠𝑎𝑎𝑟𝑎 𝑗ℎ𝑎𝑎𝑛 ℎ𝑎𝑖 𝑚𝑒𝑟𝑎..." 🎶
+👱‍♂️ 𝑯𝒆: ${senderName}
+👩🏻‍🦰 𝑺𝒉𝒆: ${girlName}
 
-💘 𝑴𝒂𝒅𝒆 𝒃𝒚 𝑻𝒂𝒍𝒉𝒂 𝑷𝒂𝒕𝒉𝒂𝒏 💘
-📌 𝗢𝗳𝗳𝗶𝗰𝗶𝗮𝗹 𝗕𝗼𝘁 𝗕𝘆 𝗧𝗮𝗹𝗵𝗮 ✨
+❤️ 𝓛𝓸𝓿𝓮 𝓒𝓸𝓷𝓷𝓮𝓬𝓽𝓲𝓸𝓷: ${lovePercent}%
+
+💌 𝓟𝓪𝓲𝓻 𝓒𝓻𝓮𝓪𝓽𝓮𝓭 𝓑𝔂: 𝑻𝒂𝒍𝒉𝒂 𝑷𝒂𝒕𝒉𝒂𝒏 ✨
+╚════════════════════╝
 `,
-    mentions: [
-      { tag: name1, id: uid1 },
-      { tag: name2, id: uid2 }
-    ],
-    attachment: [img1, img2]
+    attachment: [
+      fs.createReadStream(__dirname + "/boy.png"),
+      fs.createReadStream(__dirname + "/girl.png")
+    ]
   };
 
-  return api.sendMessage(msg, threadID);
+  api.sendMessage(msg, threadID, () => {
+    fs.unlinkSync(__dirname + "/boy.png");
+    fs.unlinkSync(__dirname + "/girl.png");
+  });
 };
