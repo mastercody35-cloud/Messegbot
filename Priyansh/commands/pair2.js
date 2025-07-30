@@ -3,7 +3,7 @@ module.exports.config = {
   version: "1.0.0",
   hasPermssion: 0,
   credits: "Talha ✨",
-  description: "Cute romantic pairing between two users",
+  description: "Cute love pair command",
   commandCategory: "Love",
   usages: "pair2",
   cooldowns: 5,
@@ -11,74 +11,56 @@ module.exports.config = {
 
 const axios = require("axios");
 const fs = require("fs-extra");
-const path = require("path");
 
 module.exports.run = async function ({ api, event, Users }) {
   const threadID = event.threadID;
-  const messageID = event.messageID;
 
+  // Get participant list
   const { participantIDs } = await api.getThreadInfo(threadID);
-  const members = participantIDs.filter(id => id !== api.getCurrentUserID());
+  const members = participantIDs.filter(id => id != api.getCurrentUserID());
 
   if (members.length < 2) {
-    return api.sendMessage("⚠️ Is group mein pairing k liye kam az kam 2 log honi chahiye!", threadID, messageID);
+    return api.sendMessage("⚠️ Kam az kam 2 members chahiye pairing ke liye!", threadID);
   }
 
-  // Randomly select two members
+  // Random 2 users
   const uid1 = members[Math.floor(Math.random() * members.length)];
   let uid2 = uid1;
   while (uid2 === uid1) {
     uid2 = members[Math.floor(Math.random() * members.length)];
   }
 
-  // Get user names
+  // Get names
   const name1 = await Users.getNameUser(uid1);
   const name2 = await Users.getNameUser(uid2);
 
-  // Fetch their DPs
-  const dp1 = `https://graph.facebook.com/${uid1}/picture?width=720&height=720`;
-  const dp2 = `https://graph.facebook.com/${uid2}/picture?width=720&height=720`;
+  // Get DPs
+  const img1 = (await axios.get(`https://graph.facebook.com/${uid1}/picture?width=720&height=720`, { responseType: "stream" })).data;
+  const img2 = (await axios.get(`https://graph.facebook.com/${uid2}/picture?width=720&height=720`, { responseType: "stream" })).data;
 
-  // Download DPs
-  const pathImg1 = path.join(__dirname, `/cache/pair2_${uid1}.jpg`);
-  const pathImg2 = path.join(__dirname, `/cache/pair2_${uid2}.jpg`);
-  const bgPath = path.join(__dirname, "/cache/pair2bg.jpg");
+  const loveRatio = Math.floor(Math.random() * 40 + 60);
 
-  const bgURL = "https://i.imgur.com/zr3PfVm.jpg"; // Romantic background image
-  const img1 = (await axios.get(dp1, { responseType: "arraybuffer" })).data;
-  const img2 = (await axios.get(dp2, { responseType: "arraybuffer" })).data;
-  const bg = (await axios.get(bgURL, { responseType: "arraybuffer" })).data;
-
-  fs.writeFileSync(pathImg1, Buffer.from(img1));
-  fs.writeFileSync(pathImg2, Buffer.from(img2));
-  fs.writeFileSync(bgPath, Buffer.from(bg));
-
-  // Send message
   const msg = {
     body: `
 ╔════ஓ๑♡๑ஓ════╗
-     💕 𝑃𝑦𝑎𝑟𝑖 𝑃𝑎𝑖𝑟 𝐴𝑙𝑒𝑟𝑡 💕
+  💘𝑪𝒖𝒕𝒆 𝑪𝒐𝒖𝒑𝒍𝒆'𝑺💘
 ╚════ஓ๑♡๑ஓ════╝
 
-💘 ${name1} ❤️ ${name2}
-🌹 𝑌𝑖 𝐽𝑜𝑑𝑖𝑖 𝐵𝑎𝑛𝑎𝑦𝑖 𝐺𝑎𝑦𝑖𝑖 ℎ𝑎𝑖𝑖 𝐴𝑎𝑠𝑚𝑎𝑎𝑛𝑜 𝑀𝑒𝑖𝑛!!
-🔮 𝐿𝑜𝑣𝑒 𝑅𝑎𝑡𝑖𝑜: ${Math.floor(Math.random() * 40) + 60}% 💞
-✨ 𝑶𝒘𝒏𝒆𝒓: 𝑻𝒂𝒍𝒉𝒂 ✨
+👩‍❤️‍👨 𝗝𝗼𝗱𝗶 𝗧𝗮𝗯𝗮𝗵 𝗞𝗮𝗿𝗻𝗲 𝗔𝗮𝗿𝗵𝗶 𝗛𝗮𝗶 🌸
+❤️ ${name1}  💞  ${name2}
+🔮 𝙻𝚘𝚟𝚎 𝙼𝚊𝚝𝚌𝚑: ${loveRatio}%
+
+🎵 "𝑇𝑢𝑚 ℎ𝑜 𝑡𝑜 𝑠𝑎𝑎𝑟𝑎 𝑗ℎ𝑎𝑎𝑛 ℎ𝑎𝑖 𝑚𝑒𝑟𝑎..." 🎶
+
+💘 𝑴𝒂𝒅𝒆 𝒃𝒚 𝑻𝒂𝒍𝒉𝒂 𝑷𝒂𝒕𝒉𝒂𝒏 💘
+📌 𝗢𝗳𝗳𝗶𝗰𝗶𝗮𝗹 𝗕𝗼𝘁 𝗕𝘆 𝗧𝗮𝗹𝗵𝗮 ✨
 `,
     mentions: [
       { tag: name1, id: uid1 },
       { tag: name2, id: uid2 }
     ],
-    attachment: [
-      fs.createReadStream(bgPath),
-      fs.createReadStream(pathImg1),
-      fs.createReadStream(pathImg2)
-    ]
+    attachment: [img1, img2]
   };
 
-  return api.sendMessage(msg, threadID, () => {
-    fs.unlinkSync(pathImg1);
-    fs.unlinkSync(pathImg2);
-    fs.unlinkSync(bgPath);
-  });
+  return api.sendMessage(msg, threadID);
 };
